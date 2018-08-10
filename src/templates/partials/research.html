@@ -1,0 +1,15 @@
+<div class="container research-container">
+  <h1>My Research</h1>
+  {% for research in researchs %}
+    <div class="research">
+      <div class="research__details">
+        <h3 class="research__name">
+          {{ research.name }}
+        </h3>
+        <p>
+          {{ research.description }}
+        </p>
+      </div>
+    </div>
+  {% endfor %}
+</div>
