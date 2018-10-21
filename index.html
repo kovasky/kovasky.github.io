@@ -12,11 +12,6 @@
     <link rel="stylesheet" href="libs/font-awesome/css/font-awesome.min.css"></link>
     <link href="css/bootstrap.min.css" rel="stylesheet"></link>
     <link href="css/styles.css" rel="stylesheet"></link>
-    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.4.1/jspdf.min.js"></script>
-    <script>
-        var doc = new jsPDF('p', 'pt', 'letter');
-    </script>
 </head>
 
 <body>
@@ -55,17 +50,7 @@
         <div id="lead-content">
             <h1>Kovasky Buezo</h1>
             <h2 style="color:white;">Computer Engineering Co-op Student</h2>
-            <button id="cmd" class="btn-rounded-white">Download Resume</button>
-            <script>        
-                $("#cmd").click(function(){
-                    var resume = fetch('https://kovasky.me/resume/index.html').then(function(response) {
-                        $("pdf").html(response);
-                            doc.fromHTML($("pdf").html(), 15, 15, {
-                            'width': 170});     
-                            doc.output("dataurlnewwindow");
-                        });
-                    });
-            </script>
+            <a href="resume.pdf" class="btn-rounded-white" target="_blank">Download Resume</a>
         </div>
         <!-- End #lead-content -->
 
