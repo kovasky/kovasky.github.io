@@ -2,30 +2,20 @@
 <html class="no-js" lang="en">
 
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8"></meta>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"></meta>
+    <meta name="viewport" content="width=device-width, initial-scale=1"></meta>
     <title>My Portfolio</title>
-	<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-	<link rel="icon" href="favicon.ico" type="image/x-icon">
-    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700,900" rel="stylesheet">
-    <link rel="stylesheet" href="libs/font-awesome/css/font-awesome.min.css">
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/styles.css" rel="stylesheet">
+	<link rel="shortcut icon" href="favicon.ico" type="image/x-icon"></link>
+	<link rel="icon" href="favicon.ico" type="image/x-icon"></link>
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700,900" rel="stylesheet"></link>
+    <link rel="stylesheet" href="libs/font-awesome/css/font-awesome.min.css"></link>
+    <link href="css/bootstrap.min.css" rel="stylesheet"></link>
+    <link href="css/styles.css" rel="stylesheet"></link>
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.4.1/jspdf.min.js"></script>
     <script>
         var doc = new jsPDF('p', 'pt', 'letter');
-       
-         var specialElementHandlers = {
-            '#editor': function (element, renderer) {
-            return true;
-            }
-        };
-
-        var resume = fetch('https://kovasky.me/resume/index.html').then(function(response) {
-            return response.text();
-        });
     </script>
 </head>
 
@@ -66,14 +56,16 @@
             <h1>Kovasky Buezo</h1>
             <h2 style="color:white;">Computer Engineering Co-op Student</h2>
             <button id="cmd" class="btn-rounded-white">Download Resume</button>
-            <script>        $("#cmd").click(function(){
-            doc.fromHTML($.get(resume, function(data) {
-            return data;
-            }), 15, 15, {
-            'width': 170});
-            
-        doc.output("dataurlnewwindow");
-        });</script>
+            <script>        
+                $("#cmd").click(function(){
+                    var resume = fetch('https://kovasky.me/resume/index.html').then(function(response) {
+                        $("pdf").html(response);
+                            doc.fromHTML($("pdf").html(), 15, 15, {
+                            'width': 170});     
+                            doc.output("dataurlnewwindow");
+                        });
+                    });
+            </script>
         </div>
         <!-- End #lead-content -->
 
@@ -197,9 +189,9 @@
         <h2 class="heading">Projects</h2>
         <div class="container">
             <div class="row">
-                <div class="project shadow-large"style="height:200px;">
+                <div class="project shadow-large" style="height:200px;">
                     <div class="project-image">
-                        <img src="images/adcalc/screen.png" style="margin-top:30px;"width="300" height="140"/>
+                        <img src="images/adcalc/screen.png" style="margin-top:30px;" width="300" height="140"></img>
                     </div>
                     <div class="project-info" style="text-align:left;">
                         <h3>Anaerobic Digester Calculator</h3>
@@ -207,13 +199,12 @@
                            Work in progress.
                         </p>
 			<a href="https://kovasky.github.io/ADcalc" target="_blank">Visit Website</a>
-			&nbsp;&nbsp;&nbsp;&nbsp;
-                        <a href="https://github.com/kovasky/ADcalc" target="_blank">View Project</a>
+                        <a href="https://github.com/kovasky/ADcalc" target="_blank">&#160;&#160;&#160;&#160;View Project</a>
                     </div>
                 </div>
                 <div class="project shadow-large">
                     <div class="project-image">
-                        <img src="images/events/screen.png" width="300"height="200"/>
+                        <img src="images/events/screen.png" width="300" height="200"></img>
                     </div>
                     <!-- End .project-image -->
                     <div class="project-info" style="text-align:left;">
@@ -222,8 +213,7 @@
                             Basic website that shows most local free events in the St. John's area.
                         </p>
 			            <a href="https://kovasky.github.io/Events" target="_blank">Visit Website</a>
-				    &nbsp;&nbsp;&nbsp;&nbsp;
-                        <a href="https://github.com/kovasky/Events" target="_blank">View Project</a>
+                        <a href="https://github.com/kovasky/Events" target="_blank">&#160;&#160;&#160;&#160;View Project</a>
                     </div>
                     <!-- End .project-info -->
                 </div>
@@ -231,7 +221,7 @@
 
 <div class="project shadow-large">
                     <div class="project-image">
-                        <img src="images/chip8/Chip8.gif" width="300" height="200" />
+                        <img src="images/chip8/Chip8.gif" width="300" height="200" ></img>
                     </div>
                     <!-- End .project-image -->
                     <div class="project-info" style="text-align:left;">
@@ -247,7 +237,7 @@
 
 <div class="project shadow-large">
                     <div class="project-image">
-                        <img src="images/textedit/te.gif" width="300" height="200" />
+                        <img src="images/textedit/te.gif" width="300" height="200" ></img>
                     </div>
                     <!-- End .project-image -->
                     <div class="project-info" style="text-align:left;">
@@ -276,7 +266,7 @@
             <div class="row">
                 <div class="col-sm-5 copyright">
                     <p>
-                        Copyright &copy; 2018 Kovasky Buezo
+                        Copyright © 2018 Kovasky Buezo
                     </p>
                 </div>
                 <div class="col-sm-2 top">
