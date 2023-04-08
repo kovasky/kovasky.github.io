@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tags on Kovasky Buezo</title>
+    <link>https://kovasky.me/tags/</link>
+    <description>Recent content in Tags on Kovasky Buezo</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Fri, 07 Apr 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://kovasky.me/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>chrony</title>
+      <link>https://kovasky.me/tags/chrony/</link>
+      <pubDate>Fri, 07 Apr 2023 00:00:00 +0000</pubDate>
+      
+      <guid>https://kovasky.me/tags/chrony/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>gps</title>
+      <link>https://kovasky.me/tags/gps/</link>
+      <pubDate>Fri, 07 Apr 2023 00:00:00 +0000</pubDate>
+      
+      <guid>https://kovasky.me/tags/gps/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>ntp</title>
+      <link>https://kovasky.me/tags/ntp/</link>
+      <pubDate>Fri, 07 Apr 2023 00:00:00 +0000</pubDate>
+      
+      <guid>https://kovasky.me/tags/ntp/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>

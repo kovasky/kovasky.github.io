@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>gps on Kovasky Buezo</title>
+    <link>https://kovasky.me/tags/gps/</link>
+    <description>Recent content in gps on Kovasky Buezo</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Fri, 07 Apr 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://kovasky.me/tags/gps/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>NTP server with chronyd and GPS</title>
+      <link>https://kovasky.me/blogs/chronyd/</link>
+      <pubDate>Fri, 07 Apr 2023 00:00:00 +0000</pubDate>
+      
+      <guid>https://kovasky.me/blogs/chronyd/</guid>
+      <description>Intro I wanted to easily synchronize the time between my VMs and decided to set up an ntp server to accomplish this. Since a USB GPS device is relatively inexpensive, I thought it would be a great addition to the project.
+For the following examples, I used aptitude and vim.
+Prerequisite Packages Run the following command to ensure we have the necessary packages:
+sudo apt-get update &amp;amp;&amp;amp; sudo apt-get install gpsd gpsd-clients chrony Check /dev for GPS Once the gps is connected to the pc, we need to figure out the assigned device.</description>
+    </item>
+    
+  </channel>
+</rss>
