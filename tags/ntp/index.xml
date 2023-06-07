@@ -8,7 +8,7 @@
     <language>en-us</language>
     <lastBuildDate>Fri, 07 Apr 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://kovasky.me/tags/ntp/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>NTP server with chronyd and GPS</title>
+      <title>NTP server with GPS and chrony</title>
       <link>https://kovasky.me/blogs/chronyd/</link>
       <pubDate>Fri, 07 Apr 2023 00:00:00 +0000</pubDate>
       

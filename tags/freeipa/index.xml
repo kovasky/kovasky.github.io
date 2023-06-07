@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>FreeIPA on Kovasky Buezo</title>
+    <link>https://kovasky.me/tags/freeipa/</link>
+    <description>Recent content in FreeIPA on Kovasky Buezo</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 07 Jun 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://kovasky.me/tags/freeipa/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Automatically create local home directory when logging in with FreeIPA</title>
+      <link>https://kovasky.me/blogs/homecreation/</link>
+      <pubDate>Wed, 07 Jun 2023 00:00:00 +0000</pubDate>
+      
+      <guid>https://kovasky.me/blogs/homecreation/</guid>
+      <description>Intro While setting up my hosts with FreeIPA, I noticed that home directories were not being created when logging in through ssh. Looking online it seems that most people just use NFS shares to keep home directories the same across devices but I did not want to set up NFS home shares. Fixing this in RHEL-based distros is easy with authconfig but debian-based distros do not come with this. To fix this in debian-based distros is as easy as modiyfing the pam.</description>
+    </item>
+    
+  </channel>
+</rss>

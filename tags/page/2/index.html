@@ -28,16 +28,14 @@
 
 
 
-<meta property="og:title" content="NTP server with GPS and chrony" />
-<meta property="og:description" content="Set up an NTP server to keep hosts synchronized." />
-<meta property="og:type" content="article" />
-<meta property="og:url" content="https://kovasky.me/blogs/chronyd/" /><meta property="article:section" content="blogs" />
-<meta property="article:published_time" content="2023-04-07T00:00:00+00:00" />
-<meta property="article:modified_time" content="2023-04-07T00:00:00+00:00" /><meta property="og:site_name" content="Kovasky Buezo" />
+<meta property="og:title" content="Tags" />
+<meta property="og:description" content="Personal Portfolio" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://kovasky.me/tags/" /><meta property="og:site_name" content="Kovasky Buezo" />
 
 <meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="NTP server with GPS and chrony"/>
-<meta name="twitter:description" content="Set up an NTP server to keep hosts synchronized."/>
+<meta name="twitter:title" content="Tags"/>
+<meta name="twitter:description" content="Personal Portfolio"/>
 
 
 <link rel="stylesheet" href="/bootstrap-5/css/bootstrap.min.css" media="all"><link rel="stylesheet" href="/css/header.css" media="all">
@@ -101,14 +99,11 @@
     }
 </style>
 
-<meta name="description" content="Set up an NTP server to keep hosts synchronized.">
-<link rel="stylesheet" href="/css/single.css">
-
-
-<script defer src="/fontawesome-5/all-5.15.4.js"></script>
+<meta name="description" content="Tags of Kovasky Buezo">
+<link rel="stylesheet" href="/css/list.css" media="all">
 
   <title>
-NTP server with GPS and chrony | Kovasky Buezo
+Tags | Kovasky Buezo
 
   </title>
 </head>
@@ -250,152 +245,57 @@ NTP server with GPS and chrony | Kovasky Buezo
     </nav>
 </header>
 <div id="content">
-<section id="single">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-sm-12 col-md-12 col-lg-9">
-        <div class="pr-lg-4">
-          <div class="title mb-5">
-            <h1 class="text-center mb-4">NTP server with GPS and chrony</h1>
-            <div class="text-center">
-              Kovasky Buezo 
-              <small>|</small>
-              Apr 7, 2023
-
-              
-              <span id="readingTime">
-                min read
-              </span>
-              
-            </div>
-          </div>
-          
-          <div class="featured-image">
-            <img class="img-fluid" src="/images/blogs/chrony.png" alt="NTP server with GPS and chrony">
-          </div>
-          
-          <article class="page-content  p-2">
-          <h2 id="intro">Intro</h2>
-<p>I wanted to easily synchronize the time between my VMs and decided to set up an ntp server to accomplish this. Since a USB GPS device is relatively inexpensive, I thought it would be a great addition to the project.</p>
-<p>For the following examples, I used aptitude and vim.</p>
-<h2 id="prerequisite-packages">Prerequisite Packages</h2>
-<p>Run the following command to ensure we have the necessary packages:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>sudo apt-get update <span style="color:#f92672">&amp;&amp;</span> sudo apt-get install gpsd gpsd-clients chrony</span></span></code></pre></div>
-<h2 id="check-dev-for-gps">Check /dev for GPS</h2>
-<p>Once the gps is connected to the pc, we need to figure out the assigned device. This can be any of /dev/ttyUSB0, /dev/ttyACM0 or /dev/ttyAMA0.</p>
-<p>If unsure of which device it is, we can always run:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>cat /dev/$device</span></span></code></pre></div>
-<p>We should be able to see a stream with coordinates and strings like &ldquo;GPGGA&rdquo; and &ldquo;GPGSA&rdquo;.</p>
-<h2 id="modify-gpsdconf-and-start-the-service">Modify gpsd.conf and start the service</h2>
-<p>After getting the correct device, we will need to modify the configuration file located at &ldquo;/etc/default/gpsd&rdquo;. It should contain the following:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>START_DAEMON<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;true&#34;</span>
-</span></span><span style="display:flex;"><span>USBAUTO<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;true&#34;</span>
-</span></span><span style="display:flex;"><span>DEVICES<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;/dev/ttyACM0&#34;</span>
-</span></span><span style="display:flex;"><span>GPSD_OPTIONS<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;-n&#34;</span></span></span></code></pre></div>
-<p>After this we should enable and start the service:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>sudo systemctl enable gpsd <span style="color:#f92672">&amp;&amp;</span> sudo systemctl start gpsd</span></span></code></pre></div>
-<h2 id="modify-chronyconf-and-start-the-service">Modify chrony.conf and start the service</h2>
-<p>The configuration file will either be in &ldquo;/etc/chrony.conf&rdquo; or &ldquo;/etc/chrony/chrony.conf&rdquo;</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>driftfile /var/lib/chrony/chrony/drift
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>allow
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>refclock SHM <span style="color:#ae81ff">0</span> refid GPS precision 1e-1 offset 0.9999 delay 0.2
-</span></span><span style="display:flex;"><span>refclock SHM <span style="color:#ae81ff">1</span> refid PPS precision 1e-7</span></span></code></pre></div>
-<p>After this we should enable and start the service:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>sudo systemctl enable chronyd <span style="color:#f92672">&amp;&amp;</span> sudo systemctl start chronyd</span></span></code></pre></div>
-<h2 id="checking-chrony-status">Checking chrony status</h2>
-<p>Theres a few things we can check to see if everything was set up correctly. To see if chrony takes in the gps data, we can run the following:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>chronyc sources</span></span></code></pre></div>
-<p>And to see if it is working as intended, we can run:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>chronyc tracking</span></span></code></pre></div>
-<p>The output should look similar to the image at the top of this post.</p>
-<h2 id="done">Done!</h2>
-<p>After following these steps, we should have a working ntp server and all that is left is to point any client to the ip of the host running chrony.</p>
-
-          </article>
-        </div>
-      </div>
-      <div class="col-sm-12 col-md-12 col-lg-3">
-        <div class="sticky-sidebar">
-          
-          <aside class="toc">
-              <h5>
-                Table Of Contents
-              </h5>
-              <div class="toc-content">
-                <nav id="TableOfContents">
-  <ul>
-    <li><a href="#intro">Intro</a></li>
-    <li><a href="#prerequisite-packages">Prerequisite Packages</a></li>
-    <li><a href="#check-dev-for-gps">Check /dev for GPS</a></li>
-    <li><a href="#modify-gpsdconf-and-start-the-service">Modify gpsd.conf and start the service</a></li>
-    <li><a href="#modify-chronyconf-and-start-the-service">Modify chrony.conf and start the service</a></li>
-    <li><a href="#checking-chrony-status">Checking chrony status</a></li>
-    <li><a href="#done">Done!</a></li>
-  </ul>
-</nav>
-              </div>
-          </aside>
-          
-
-          
-          <aside class="tags">
-            <h5>Tags</h5>
-            <ul class="tags-ul list-unstyled list-inline">
-              
-              <li class="list-inline-item"><a href="https://kovasky.me/tags/ntp" target="_blank">ntp</a></li>
-              
-              <li class="list-inline-item"><a href="https://kovasky.me/tags/chrony" target="_blank">chrony</a></li>
-              
-              <li class="list-inline-item"><a href="https://kovasky.me/tags/gps" target="_blank">gps</a></li>
-              
-            </ul>
-          </aside>
-          
-        </div>
-      </div>
-    </div>
+<div class="container pt-5" id="list-page">
+    <h2 class="text-center pb-2">Tags</h2>
     <div class="row">
-      <div class="col-sm-12 col-md-12 col-lg-9 p-4">
         
-      </div>
+        <div class="col-lg-4 col-md-6 my-3">
+            <div class="card-columns">
+                <div class="card h-100">
+                    
+                    <div class="card-body bg-transparent p-4 shadow-sm">
+                        <a href="/tags/ntp/" class="primary-font card-title">
+                            <h5 class="card-title bg-transparent" title="ntp">ntp</h5>
+                        </a>
+                        <div class="card-text secondary-font">
+                            <p></p>
+                        </div>
+                    </div>
+                    <div class="mt-auto post-footer bg-transparent py-3">
+                        <span class="float-start bg-transparent">Apr 7, 2023</span>
+                        <a href="/tags/ntp/" class="float-end btn btn-outline-info btn-sm">Read</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-auto m-3">
+                
+    <ul class="pagination pagination-default">
+      <li class="page-item">
+        <a href="/tags/" aria-label="First" class="page-link" role="button"><span aria-hidden="true">&laquo;&laquo;</span></a>
+      </li>
+      <li class="page-item">
+        <a href="/tags/" aria-label="Previous" class="page-link" role="button"><span aria-hidden="true">&laquo;</span></a>
+      </li>
+      <li class="page-item">
+        <a href="/tags/" aria-label="Page 1" class="page-link" role="button">1</a>
+      </li>
+      <li class="page-item active">
+        <a aria-current="page" aria-label="Page 2" class="page-link" role="button">2</a>
+      </li>
+      <li class="page-item disabled">
+        <a aria-disabled="true" aria-label="Next" class="page-link" role="button" tabindex="-1"><span aria-hidden="true">&raquo;</span></a>
+      </li>
+      <li class="page-item disabled">
+        <a aria-disabled="true" aria-label="Last" class="page-link" role="button" tabindex="-1"><span aria-hidden="true">&raquo;&raquo;</span></a>
+      </li>
+    </ul>
+            </div>
+        </div>
     </div>
-  </div>
-  <button class="p-2 px-3" onclick="topFunction()" id="topScroll">
-    <i class="fas fa-angle-up"></i>
-  </button>
-</section>
-
-
-<div class="progress">
-  <div id="scroll-progress-bar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
 </div>
-<Script src="/js/scrollProgressBar.js"></script>
-
-
-<script>
-  var topScroll = document.getElementById("topScroll");
-  window.onscroll = function() {scrollFunction()};
-
-  function scrollFunction() {
-    if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
-      topScroll.style.display = "block";
-    } else {
-      topScroll.style.display = "none";
-    }
-  }
-
-  function topFunction() {
-    document.body.scrollTop = 0;
-    document.documentElement.scrollTop = 0;
-  }
-</script>
-
-
-<script src="/js/readingTime.js"></script>
-
-
 
   </div><footer>
     <div class="container py-3" id="recent-posts">
