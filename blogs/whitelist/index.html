@@ -32,8 +32,8 @@
 <meta property="og:description" content="Add a dns whitelist for Suricata in PfSense." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://kovasky.me/blogs/whitelist/" /><meta property="article:section" content="blogs" />
-<meta property="article:published_time" content="2023-09-12T00:00:00+00:00" />
-<meta property="article:modified_time" content="2023-09-12T00:00:00+00:00" /><meta property="og:site_name" content="Kovasky Buezo" />
+<meta property="article:published_time" content="2023-09-13T00:00:00+00:00" />
+<meta property="article:modified_time" content="2023-09-13T00:00:00+00:00" /><meta property="og:site_name" content="Kovasky Buezo" />
 
 <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Whitelisting in Suricata Package for PfSense"/>
@@ -260,7 +260,7 @@ Whitelisting in Suricata Package for PfSense | Kovasky Buezo
             <div class="text-center">
               Kovasky Buezo 
               <small>|</small>
-              Sep 12, 2023
+              Sep 13, 2023
 
               
               <span id="readingTime">
@@ -271,7 +271,7 @@ Whitelisting in Suricata Package for PfSense | Kovasky Buezo
           </div>
           
           <div class="featured-image">
-            <img class="img-fluid" src="/images/blogs/freeipa_home.png" alt="Whitelisting in Suricata Package for PfSense">
+            <img class="img-fluid" src="/images/blogs/suricata.png" alt="Whitelisting in Suricata Package for PfSense">
           </div>
           
           <article class="page-content  p-2">
@@ -279,9 +279,28 @@ Whitelisting in Suricata Package for PfSense | Kovasky Buezo
 <p>After tirelessly looking for a solution in order to dynamically create a whitelist for Suricata based on DNS, I decided to create my own.</p>
 <h2 id="download-the-necessary-files">Download the necessary files</h2>
 <p>Create a whitelist file with all the domains you wish whitelisted. A useful starting point is <a href="https://github.com/anudeepND/whitelist">anudeepND&rsquo;s collection of commonly white listed domains</a>. After that, download my <a href="https://github.com/kovasky/homelabscripts/blob/main/pfSense/suricata/generateRules.py">generateRules.py</a> script.</p>
-<p>Place these files in a directory of your choice on your PfSense host. For simplicity, I just placed them in /root.</p>
+<p>Place these files in a directory of your choice on your PfSense host. For simplicity, I just placed them in /root. Finally, make the script executable by <code>chmod +x ./generateRules.py</code>.</p>
+<h2 id="modifying-suricatainc">Modifying suricata.inc</h2>
+<p>Navigate to <code>/usr/local/pkg/suricata/</code> and using a text editor open <code>suricata_defs.inc</code>. Make the following modifications:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-php" data-lang="php"><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">defined</span>(<span style="color:#e6db74">&#34;SURICATA_DEFAULT_RULES&#34;</span>))
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">define</span>(<span style="color:#e6db74">&#34;SURICATA_DEFAULT_RULES&#34;</span>, <span style="color:#66d9ef">array</span>( <span style="color:#e6db74">&#34;whitelist.rules&#34;</span>,<span style="color:#e6db74">&#34;app-layer-events.rules&#34;</span>, 
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;decoder-events.rules&#34;</span>, <span style="color:#e6db74">&#34;dhcp-events.rules&#34;</span>, <span style="color:#e6db74">&#34;dnp3-events.rules&#34;</span>, 
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;dns-events.rules&#34;</span>, <span style="color:#e6db74">&#34;files.rules&#34;</span>, <span style="color:#e6db74">&#34;http-events.rules&#34;</span>, 
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;http2-events.rules&#34;</span>, <span style="color:#e6db74">&#34;ipsec-events.rules&#34;</span>, <span style="color:#e6db74">&#34;kerberos-events.rules&#34;</span>, 
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;modbus-events.rules&#34;</span>, <span style="color:#e6db74">&#34;mqtt-events.rules&#34;</span>, <span style="color:#e6db74">&#34;nfs-events.rules&#34;</span>, 
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;ntp-events.rules&#34;</span>, <span style="color:#e6db74">&#34;smb-events.rules&#34;</span>, <span style="color:#e6db74">&#34;smtp-events.rules&#34;</span>, 
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;ssh-events.rules&#34;</span>, <span style="color:#e6db74">&#34;stream-events.rules&#34;</span>, <span style="color:#e6db74">&#34;tls-events.rules&#34;</span>));</span></span></code></pre></div>
+<p>The first element in the array will be our generated <code>whitelist.rules</code>. This file can be named as you wish and it will appear as so in the web gui.</p>
+<h2 id="running-the-script">Running the script</h2>
+<p>Run the script with the path to the dns whitelist as well as where you want the output file. For example:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>./generateRules.py /root/dns_list.txt /root/whitelist.rules</span></span></code></pre></div>
+<p>Once the script has finished, you can copy/move it to <code>/usr/local/share/suricata/rules/</code>. If you open the Suricata web gui and select your interface, the new ruleset should appear. If not, you can try running <code>suricata-update</code> in terminal.</p>
+<h2 id="automating-the-generation-of-rules">Automating the generation of rules</h2>
+<p>Since the IPs can change for any given domain, an easy way to update them would be to set up a cron job. Mine looks like this:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#ae81ff">0</span> <span style="color:#ae81ff">0</span> * * * /root/update_rules.py /root/dns_list.txt /root/whitelist.rules
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">35</span> <span style="color:#ae81ff">0</span> * * * mv /root/whitelist.rules /usr/local/share/suricata/rules/whitelist.rules <span style="color:#f92672">&amp;&amp;</span> suricata-update</span></span></code></pre></div>
 <h2 id="done">Done!</h2>
-<p>After following these steps, our host should automatically create a home directory when logging in through ssh using FreeIPA credentials.</p>
+<p>After these steps are done, you are good to go and your domains will be whitelisted.</p>
 
           </article>
         </div>
@@ -298,6 +317,9 @@ Whitelisting in Suricata Package for PfSense | Kovasky Buezo
   <ul>
     <li><a href="#intro">Intro</a></li>
     <li><a href="#download-the-necessary-files">Download the necessary files</a></li>
+    <li><a href="#modifying-suricatainc">Modifying suricata.inc</a></li>
+    <li><a href="#running-the-script">Running the script</a></li>
+    <li><a href="#automating-the-generation-of-rules">Automating the generation of rules</a></li>
     <li><a href="#done">Done!</a></li>
   </ul>
 </nav>
@@ -377,7 +399,7 @@ Whitelisting in Suricata Package for PfSense | Kovasky Buezo
                 
                 <div class="card-header">
                     <a href="/blogs/whitelist/">
-                        <img src="/images/blogs/freeipa_home.png" class="card-img-top" alt="Whitelisting in Suricata Package for PfSense">
+                        <img src="/images/blogs/suricata.png" class="card-img-top" alt="Whitelisting in Suricata Package for PfSense">
                     </a>
                 </div>
                 
@@ -391,7 +413,7 @@ Download the necessary files Create a whitelist file with all the domains you wi
                     </div>
                 </div>
                 <div class="mt-auto card-footer">
-                    <span class="float-start">Sep 12, 2023</span>
+                    <span class="float-start">Sep 13, 2023</span>
                     <a href="/blogs/whitelist/" class="float-end btn btn-outline-info btn-sm">Read</a>
                 </div>
             </div>
