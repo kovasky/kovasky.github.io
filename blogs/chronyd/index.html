@@ -78,19 +78,18 @@
     }
 
     body::-webkit-scrollbar {
-        width: .5em;
-        height: .5em;
+        height: 0px;
+        width: 8px;
         background-color: var(--background-color);
     }
     
     ::-webkit-scrollbar-track {
-        box-shadow: inset 0 0 6px var(--background-color);
         border-radius: 1rem;
     }
     
     ::-webkit-scrollbar-thumb {
         border-radius: 1rem;
-        background-color: var(--secondary-color);
+        background: #b0b0b0;
         outline: 1px solid var(--background-color);
     }
 
@@ -105,7 +104,7 @@
 <link rel="stylesheet" href="/css/single.css">
 
 
-<script defer src="/fontawesome-5/all-5.15.4.js"></script>
+<script defer src="/fontawesome-6/all-6.4.2.js"></script>
 
   <title>
 NTP server with GPS and chrony | Kovasky Buezo
@@ -137,7 +136,9 @@ NTP server with GPS and chrony | Kovasky Buezo
 
 
 
-<header>
+
+
+<header id="profileHeader">
     <nav class="pt-3 navbar navbar-expand-lg animate">
         <div class="container-fluid mx-xs-2 mx-sm-5 mx-md-5 mx-lg-5">
             
@@ -271,7 +272,7 @@ NTP server with GPS and chrony | Kovasky Buezo
           </div>
           
           <div class="featured-image">
-            <img class="img-fluid" src="/images/blogs/chrony.png" alt="NTP server with GPS and chrony">
+            <img class="img-fluid mx-auto d-block" src="/images/blogs/chrony.png" alt="NTP server with GPS and chrony">
           </div>
           
           <article class="page-content  p-2">
@@ -317,7 +318,7 @@ NTP server with GPS and chrony | Kovasky Buezo
         </div>
       </div>
       <div class="col-sm-12 col-md-12 col-lg-3">
-        <div class="sticky-sidebar">
+        <div id="stickySideBar" class="sticky-sidebar">
           
           <aside class="toc">
               <h5>
@@ -351,6 +352,31 @@ NTP server with GPS and chrony | Kovasky Buezo
               <li class="list-inline-item"><a href="https://kovasky.me/tags/gps" target="_blank">gps</a></li>
               
             </ul>
+          </aside>
+          
+
+          
+          <aside class="social">
+            <h5>Social</h5>
+            <div class="social-content">
+              <ul class="list-inline">
+                <li class="list-inline-item text-center">
+                  <a target="_blank" href="https://twitter.com/share?text=NTP%20server%20with%20GPS%20and%20chrony&url=https%3a%2f%2fkovasky.me%2fblogs%2fchronyd%2f">
+                    <i class="fab fa-twitter"></i>
+                  </a>
+                </li>
+                <li class="list-inline-item text-center">
+                  <a target="_blank" href="https://api.whatsapp.com/send?text=NTP%20server%20with%20GPS%20and%20chrony: https%3a%2f%2fkovasky.me%2fblogs%2fchronyd%2f">
+                    <i class="fab fa-whatsapp"></i>
+                  </a>
+                </li>
+                <li class="list-inline-item text-center">
+                  <a target="_blank" href='mailto:?subject=NTP%20server%20with%20GPS%20and%20chrony&amp;body=Check%20out%20this%20site https%3a%2f%2fkovasky.me%2fblogs%2fchronyd%2f'>
+                    <i class="fa fa-envelope"></i>
+                  </a>
+                </li>
+              </ul>
+            </div>
           </aside>
           
         </div>
@@ -390,6 +416,17 @@ NTP server with GPS and chrony | Kovasky Buezo
     document.body.scrollTop = 0;
     document.documentElement.scrollTop = 0;
   }
+
+  
+  let stickySideBarElem = document.getElementById("stickySideBar");
+  let stickyNavBar =  false ;
+  if(stickyNavBar) {
+    let headerElem = document.getElementById("profileHeader");
+    let headerHeight = headerElem.offsetHeight + 15;
+    stickySideBarElem.style.top = headerHeight + "px";
+  } else {
+    stickySideBarElem.style.top = "50px";
+  }
 </script>
 
 
@@ -398,9 +435,10 @@ NTP server with GPS and chrony | Kovasky Buezo
 
 
   </div><footer>
-    <div class="container py-3" id="recent-posts">
     
-    
+ 
+ 
+<div class="container py-3" id="recent-posts">
     
     
     <div class="h3 text-center text-secondary py-3">
@@ -483,8 +521,9 @@ Hosts My homelab consists of a 2 node …</p>
         </div>
         
     </div>
-    
-</div><div class="text-center pt-2">
+</div>
+
+<div class="text-center pt-2">
     
     <span class="px-1">
         <a href="https://github.com/kovasky" aria-label="github">
@@ -546,11 +585,6 @@ Hosts My homelab consists of a 2 node …</p>
                 <span class="text-danger">
                     &#10084;
                 </span>
-                and
-                <a href="https://github.com/gurusabarish/hugo-profile" target="_blank"
-                    title="Designed and developed by gurusabarish">
-                    Hugo Profile
-                </a>
             </div>
         </div>
     </div>
@@ -564,6 +598,8 @@ Hosts My homelab consists of a 2 node …</p>
 
 
     <script src="/js/search.js"></script>
+
+
 
 
 

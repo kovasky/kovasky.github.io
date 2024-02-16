@@ -55,7 +55,6 @@ header .navbar.animate {
     animation: fade-up 0.5s ease-in;
 }
 
-
 /* ToolTip */
 
 .tooltip {
@@ -513,6 +512,10 @@ header .navbar.animate {
 #achievements .card-text {
     background-color: var(--secondary-color) !important;
     color: var(--text-secondary-color) !important;
+}
+
+#achievements img {
+    border-radius: 0.7rem;
 }
 
 /* contact */

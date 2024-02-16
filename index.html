@@ -77,19 +77,18 @@
     }
 
     body::-webkit-scrollbar {
-        width: .5em;
-        height: .5em;
+        height: 0px;
+        width: 8px;
         background-color: var(--background-color);
     }
     
     ::-webkit-scrollbar-track {
-        box-shadow: inset 0 0 6px var(--background-color);
         border-radius: 1rem;
     }
     
     ::-webkit-scrollbar-thumb {
         border-radius: 1rem;
-        background-color: var(--secondary-color);
+        background: #b0b0b0;
         outline: 1px solid var(--background-color);
     }
 
@@ -105,7 +104,7 @@
 <link rel="stylesheet" href="/css/projects.css" media="all">
 
 
-<script defer src="/fontawesome-5/all-5.15.4.js"></script>
+<script defer src="/fontawesome-6/all-6.4.2.js"></script>
 
   <title>
 Kovasky Buezo
@@ -137,7 +136,9 @@ Kovasky Buezo
 
 
 
-<header>
+
+
+<header id="profileHeader">
     <nav class="pt-3 navbar navbar-expand-lg animate">
         <div class="container-fluid mx-xs-2 mx-sm-5 mx-md-5 mx-lg-5">
             
@@ -961,6 +962,7 @@ Kovasky Buezo
                 
                 <div class="col-lg-4 col-md-6 my-3">
                     <a class="card my-3 h-100 p-3" href="https://devpost.com/software/kafa-thermostat-enhancer" title="1st Place Overall, MakeUofT 2021" target="_blank">
+                        
                         <div class="card-body bg-transparent">
                             <h5 class="card-title bg-transparent">1st Place Overall, MakeUofT 2021</h5>
                             <div class="card-text secondary-font">
@@ -974,6 +976,7 @@ Kovasky Buezo
                 
                 <div class="col-lg-4 col-md-6 my-3">
                     <div class="card my-3 h-100 p-3" title="Spark Fund, Memorial University Centre for Entrepreneurship Winter 2020">
+                        
                         <div class="card-body bg-transparent">
                             <h5 class="card-title bg-transparent">Spark Fund, Memorial University Centre for Entrepreneurship Winter 2020</h5>
                             <div class="card-text secondary-font">
@@ -1026,9 +1029,10 @@ Kovasky Buezo
 </svg>
 
   </div><footer>
-    <div class="container py-3" id="recent-posts">
     
-    
+ 
+ 
+<div class="container py-3" id="recent-posts">
     
     
     <div class="h3 text-center text-secondary py-3">
@@ -1111,8 +1115,9 @@ Hosts My homelab consists of a 2 node …</p>
         </div>
         
     </div>
-    
-</div><div class="text-center pt-2">
+</div>
+
+<div class="text-center pt-2">
     
     <span class="px-1">
         <a href="https://github.com/kovasky" aria-label="github">
@@ -1174,11 +1179,6 @@ Hosts My homelab consists of a 2 node …</p>
                 <span class="text-danger">
                     &#10084;
                 </span>
-                and
-                <a href="https://github.com/gurusabarish/hugo-profile" target="_blank"
-                    title="Designed and developed by gurusabarish">
-                    Hugo Profile
-                </a>
             </div>
         </div>
     </div>
@@ -1192,6 +1192,8 @@ Hosts My homelab consists of a 2 node …</p>
 
 
     <script src="/js/search.js"></script>
+
+
 
 
 
