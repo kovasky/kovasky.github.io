@@ -2,11 +2,32 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
+    <loc>https://kovasky.me/tags/active-directory/</loc>
+    <lastmod>2024-02-16T00:00:00+00:00</lastmod>
+  </url><url>
     <loc>https://kovasky.me/blogs/</loc>
-    <lastmod>2023-11-01T00:00:00+00:00</lastmod>
+    <lastmod>2024-02-16T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/cross-domain-trust/</loc>
+    <lastmod>2024-02-16T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/freeipa/</loc>
+    <lastmod>2024-02-16T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://kovasky.me/</loc>
-    <lastmod>2023-11-01T00:00:00+00:00</lastmod>
+    <lastmod>2024-02-16T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/linux/</loc>
+    <lastmod>2024-02-16T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/blogs/ad_trust/</loc>
+    <lastmod>2024-02-16T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/</loc>
+    <lastmod>2024-02-16T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/windows/</loc>
+    <lastmod>2024-02-16T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://kovasky.me/tags/proxmox/</loc>
     <lastmod>2023-11-01T00:00:00+00:00</lastmod>
@@ -15,9 +36,6 @@
     <lastmod>2023-11-01T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://kovasky.me/tags/systemd/</loc>
-    <lastmod>2023-11-01T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>https://kovasky.me/tags/</loc>
     <lastmod>2023-11-01T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://kovasky.me/tags/ansible/</loc>
@@ -42,9 +60,6 @@
     <lastmod>2023-09-13T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://kovasky.me/blogs/homecreation/</loc>
-    <lastmod>2023-06-07T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>https://kovasky.me/tags/freeipa/</loc>
     <lastmod>2023-06-07T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://kovasky.me/tags/chrony/</loc>

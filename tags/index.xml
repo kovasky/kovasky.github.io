@@ -6,7 +6,52 @@
     <description>Recent content in Tags on Kovasky Buezo</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 01 Nov 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://kovasky.me/tags/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 16 Feb 2024 00:00:00 +0000</lastBuildDate><atom:link href="https://kovasky.me/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Active Directory</title>
+      <link>https://kovasky.me/tags/active-directory/</link>
+      <pubDate>Fri, 16 Feb 2024 00:00:00 +0000</pubDate>
+      
+      <guid>https://kovasky.me/tags/active-directory/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>cross-domain trust</title>
+      <link>https://kovasky.me/tags/cross-domain-trust/</link>
+      <pubDate>Fri, 16 Feb 2024 00:00:00 +0000</pubDate>
+      
+      <guid>https://kovasky.me/tags/cross-domain-trust/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>FreeIPA</title>
+      <link>https://kovasky.me/tags/freeipa/</link>
+      <pubDate>Fri, 16 Feb 2024 00:00:00 +0000</pubDate>
+      
+      <guid>https://kovasky.me/tags/freeipa/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Linux</title>
+      <link>https://kovasky.me/tags/linux/</link>
+      <pubDate>Fri, 16 Feb 2024 00:00:00 +0000</pubDate>
+      
+      <guid>https://kovasky.me/tags/linux/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Windows</title>
+      <link>https://kovasky.me/tags/windows/</link>
+      <pubDate>Fri, 16 Feb 2024 00:00:00 +0000</pubDate>
+      
+      <guid>https://kovasky.me/tags/windows/</guid>
+      <description></description>
+    </item>
+    
     <item>
       <title>Proxmox</title>
       <link>https://kovasky.me/tags/proxmox/</link>
@@ -67,15 +112,6 @@
       <pubDate>Wed, 13 Sep 2023 00:00:00 +0000</pubDate>
       
       <guid>https://kovasky.me/tags/suricata/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>FreeIPA</title>
-      <link>https://kovasky.me/tags/freeipa/</link>
-      <pubDate>Wed, 07 Jun 2023 00:00:00 +0000</pubDate>
-      
-      <guid>https://kovasky.me/tags/freeipa/</guid>
       <description></description>
     </item>
     
