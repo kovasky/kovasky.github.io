@@ -8,6 +8,17 @@
     <language>en-us</language>
     <lastBuildDate>Fri, 16 Feb 2024 00:00:00 +0000</lastBuildDate><atom:link href="https://kovasky.me/tags/windows/index.xml" rel="self" type="application/rss+xml" />
     <item>
+      <title>Log in to Linux using AD credentials without specifying the domain</title>
+      <link>https://kovasky.me/blogs/no_domain_login/</link>
+      <pubDate>Fri, 16 Feb 2024 00:00:00 +0000</pubDate>
+      
+      <guid>https://kovasky.me/blogs/no_domain_login/</guid>
+      <description>Intro After creating a trust in FreeIPA, I kept having to write the full domain alongside my username whenever I tried to access the system. These are the steps I took to log in only with my username.
+Editing SSSD.conf Navigate to /etc/sssd/ and open sssd.conf in an elevated text editor. It should look something like
+[domain/lin.mydomain.com] ... [sssd] services = nss, pam, ssh, sudo domains = lin.mydomain.com Under [sssd], modify the domains line and add your ad domain.</description>
+    </item>
+    
+    <item>
       <title>Setting up a cross-domain trust between FreeIPA and AD</title>
       <link>https://kovasky.me/blogs/ad_trust/</link>
       <pubDate>Fri, 16 Feb 2024 00:00:00 +0000</pubDate>
