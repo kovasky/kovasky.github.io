@@ -28,14 +28,16 @@
 
 
 
-<meta property="og:title" content="Systemd" />
-<meta property="og:description" content="Personal Portfolio" />
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://kovasky.me/tags/systemd/" /><meta property="og:site_name" content="Kovasky Buezo" />
+<meta property="og:title" content="Map an Active Directory group to sudo in Linux" />
+<meta property="og:description" content="Map Active Directory groups in FreeIPA to control access to resources within Linux environments based on AD group memberships." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://kovasky.me/blogs/mapping_sudo/" /><meta property="article:section" content="blogs" />
+<meta property="article:published_time" content="2024-02-21T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-02-21T00:00:00+00:00" /><meta property="og:site_name" content="Kovasky Buezo" />
 
 <meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Systemd"/>
-<meta name="twitter:description" content="Personal Portfolio"/>
+<meta name="twitter:title" content="Map an Active Directory group to sudo in Linux"/>
+<meta name="twitter:description" content="Map Active Directory groups in FreeIPA to control access to resources within Linux environments based on AD group memberships."/>
 
 
 <link rel="stylesheet" href="/bootstrap-5/css/bootstrap.min.css" media="all"><link rel="stylesheet" href="/css/header.css" media="all">
@@ -98,11 +100,14 @@
     }
 </style>
 
-<meta name="description" content="Systemd of Kovasky Buezo">
-<link rel="stylesheet" href="/css/list.css" media="all">
+<meta name="description" content="Map Active Directory groups in FreeIPA to control access to resources within Linux environments based on AD group memberships.">
+<link rel="stylesheet" href="/css/single.css">
+
+
+<script defer src="/fontawesome-6/all-6.4.2.js"></script>
 
   <title>
-Systemd | Kovasky Buezo
+Map an Active Directory group to sudo in Linux | Kovasky Buezo
 
   </title>
 </head>
@@ -246,43 +251,167 @@ Systemd | Kovasky Buezo
     </nav>
 </header>
 <div id="content">
-<div class="container pt-5" id="list-page">
-    <h2 class="text-center pb-2">Systemd</h2>
-    <div class="row">
-        
-        <div class="col-lg-4 col-md-6 my-3">
-            <div class="card-columns">
-                <div class="card h-100">
-                    
-                    <div class="card-header">
-                        <a href="/blogs/oneshot/">
-                            <img src="/images/blogs/oneshot.png" class="card-img-top" alt="Starting a VM in Proxmox without Quorum">
-                        </a>
-                    </div>
-                    
-                    <div class="card-body bg-transparent p-4 shadow-sm">
-                        <a href="/blogs/oneshot/" class="primary-font card-title">
-                            <h5 class="card-title bg-transparent" title="Starting a VM in Proxmox without Quorum">Starting a VM in Proxmox …</h5>
-                        </a>
-                        <div class="card-text secondary-font">
-                            <p>Intro One of the nodes in my lab runs PfSense and if the vm is down, my network is down. This prevents my nodes from reaching quorum, and thus preventing PfSense from starting. To solve this, I needed a way for the vm to start without quorum. This was achieved by creating a oneshot service that runs …</p>
-                        </div>
-                    </div>
-                    <div class="mt-auto post-footer bg-transparent py-3">
-                        <span class="float-start bg-transparent">Nov 1, 2023</span>
-                        <a href="/blogs/oneshot/" class="float-end btn btn-outline-info btn-sm">Read</a>
-                    </div>
-                </div>
+<section id="single">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-sm-12 col-md-12 col-lg-9">
+        <div class="pr-lg-4">
+          <div class="title mb-5">
+            <h1 class="text-center mb-4">Map an Active Directory group to sudo in Linux</h1>
+            <div class="text-center">
+              Kovasky Buezo 
+              <small>|</small>
+              Feb 21, 2024
+
+              
+              <span id="readingTime">
+                min read
+              </span>
+              
             </div>
+          </div>
+          
+          <div class="featured-image">
+            <img class="img-fluid mx-auto d-block" src="/images/blogs/mapping_sudo.png" alt="Map an Active Directory group to sudo in Linux">
+          </div>
+          
+          <article class="page-content  p-2">
+          <h2 id="intro">Intro</h2>
+<p>After creating my domain trust between AD and FreeIPA, I was left wanting to access restricted resources in Linux using my AD accounts. To circumvent this, I mapped a group from AD to FreeIPA and gave it the appropriate permissions.</p>
+<h2 id="create-the-group-in-ad">Create the group in AD</h2>
+<p>The first step would be to create a group in AD to which sudo will be mapped. In my case, I created a group named &lsquo;sudo&rsquo; to match the Linux counterpart. To do this, navigate to Server Manager -&gt; Active Directory Users and Computers -&gt; Users. Then, right-click and go to New -&gt; Group. In the name, type &lsquo;sudo&rsquo;. After the item is created, it should look like:</p>
+<p><img src="/images/blogs/sudo_group.png" alt="sudo group in AD"></p>
+<h2 id="create-an-external-group-in-freeipa">Create an external group in FreeIPA</h2>
+<p>Navigate to Identity -&gt; Groups -&gt; User Groups -&gt; Add. Create a group named &lsquo;ad_sudo,&rsquo; making sure &lsquo;Group Type&rsquo; is marked as &rsquo;external.&rsquo; It should look like:</p>
+<p><img src="/images/blogs/ad_sudo_group.png" alt="ad_sudo group in FreeIPA"></p>
+<p>Click &lsquo;Add and Edit,&rsquo; then navigate to &lsquo;External.&rsquo; Click on &lsquo;add&rsquo; and input &lsquo;<a href="mailto:sudo@win.mydomain.local">sudo@win.mydomain.local</a>&rsquo; and select &lsquo;Add.&rsquo; It should look something like:</p>
+<p><img src="/images/blogs/external_sudo_group.png" alt="external sudo group in FreeIPA"></p>
+<h2 id="create-policies">Create policies</h2>
+<p>After you&rsquo;ve included your external group, you can modify policies as you wish. These will apply to members of the AD group. To allow the &lsquo;ad_sudo&rsquo; group to issue sudo commands, navigate to Policy -&gt; Sudo -&gt; Sudo Rules. Here, you can create a new rule or directly add it to the &lsquo;All&rsquo; rule. In my case, I created a rule titled &lsquo;sudorule&rsquo;. Click on edit and under the &lsquo;Who&rsquo; section add the mapped group.</p>
+<p>This still does not allow &lsquo;ad_sudo&rsquo; members access to restricted resources or commands. To allow them to do so, scroll down to &lsquo;Run Commands&rsquo; and click &lsquo;Add&rsquo; under &lsquo;Sudo Allow Commands&rsquo;. The only pre-generated rule is the &lsquo;All&rsquo; rule. This will essentially make users root (very dangerous). It should look something like:</p>
+<p><img src="/images/blogs/ad_sudo_rule.png" alt="ad_sudo rule in FreeIPA"></p>
+<h2 id="done">Done!</h2>
+<p>Once everything is set-up, members of this group should be limited/allowed to elements and commands as defined by the policies set in place.</p>
+
+          </article>
         </div>
-        
-        <div class="row justify-content-center">
-            <div class="col-auto m-3">
-                
+      </div>
+      <div class="col-sm-12 col-md-12 col-lg-3">
+        <div id="stickySideBar" class="sticky-sidebar">
+          
+          <aside class="toc">
+              <h5>
+                Table Of Contents
+              </h5>
+              <div class="toc-content">
+                <nav id="TableOfContents">
+  <ul>
+    <li><a href="#intro">Intro</a></li>
+    <li><a href="#create-the-group-in-ad">Create the group in AD</a></li>
+    <li><a href="#create-an-external-group-in-freeipa">Create an external group in FreeIPA</a></li>
+    <li><a href="#create-policies">Create policies</a></li>
+    <li><a href="#done">Done!</a></li>
+  </ul>
+</nav>
+              </div>
+          </aside>
+          
+
+          
+          <aside class="tags">
+            <h5>Tags</h5>
+            <ul class="tags-ul list-unstyled list-inline">
+              
+              <li class="list-inline-item"><a href="https://kovasky.me/tags/freeipa" target="_blank">FreeIPA</a></li>
+              
+              <li class="list-inline-item"><a href="https://kovasky.me/tags/active-directory" target="_blank">Active Directory</a></li>
+              
+              <li class="list-inline-item"><a href="https://kovasky.me/tags/linux" target="_blank">Linux</a></li>
+              
+              <li class="list-inline-item"><a href="https://kovasky.me/tags/windows" target="_blank">Windows</a></li>
+              
+            </ul>
+          </aside>
+          
+
+          
+          <aside class="social">
+            <h5>Social</h5>
+            <div class="social-content">
+              <ul class="list-inline">
+                <li class="list-inline-item text-center">
+                  <a target="_blank" href="https://twitter.com/share?text=Map%20an%20Active%20Directory%20group%20to%20sudo%20in%20Linux&url=https%3a%2f%2fkovasky.me%2fblogs%2fmapping_sudo%2f">
+                    <i class="fab fa-twitter"></i>
+                  </a>
+                </li>
+                <li class="list-inline-item text-center">
+                  <a target="_blank" href="https://api.whatsapp.com/send?text=Map%20an%20Active%20Directory%20group%20to%20sudo%20in%20Linux: https%3a%2f%2fkovasky.me%2fblogs%2fmapping_sudo%2f">
+                    <i class="fab fa-whatsapp"></i>
+                  </a>
+                </li>
+                <li class="list-inline-item text-center">
+                  <a target="_blank" href='mailto:?subject=Map%20an%20Active%20Directory%20group%20to%20sudo%20in%20Linux&amp;body=Check%20out%20this%20site https%3a%2f%2fkovasky.me%2fblogs%2fmapping_sudo%2f'>
+                    <i class="fa fa-envelope"></i>
+                  </a>
+                </li>
+              </ul>
             </div>
+          </aside>
+          
         </div>
+      </div>
     </div>
+    <div class="row">
+      <div class="col-sm-12 col-md-12 col-lg-9 p-4">
+        
+      </div>
+    </div>
+  </div>
+  <button class="p-2 px-3" onclick="topFunction()" id="topScroll">
+    <i class="fas fa-angle-up"></i>
+  </button>
+</section>
+
+
+<div class="progress">
+  <div id="scroll-progress-bar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
 </div>
+<Script src="/js/scrollProgressBar.js"></script>
+
+
+<script>
+  var topScroll = document.getElementById("topScroll");
+  window.onscroll = function() {scrollFunction()};
+
+  function scrollFunction() {
+    if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+      topScroll.style.display = "block";
+    } else {
+      topScroll.style.display = "none";
+    }
+  }
+
+  function topFunction() {
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+  }
+
+  
+  let stickySideBarElem = document.getElementById("stickySideBar");
+  let stickyNavBar =  false ;
+  if(stickyNavBar) {
+    let headerElem = document.getElementById("profileHeader");
+    let headerHeight = headerElem.offsetHeight + 15;
+    stickySideBarElem.style.top = headerHeight + "px";
+  } else {
+    stickySideBarElem.style.top = "50px";
+  }
+</script>
+
+
+<script src="/js/readingTime.js"></script>
+
+
 
   </div><footer>
     
