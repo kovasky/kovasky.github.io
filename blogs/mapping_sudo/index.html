@@ -281,15 +281,16 @@ Map an Active Directory group to sudo in Linux | Kovasky Buezo
 <h2 id="create-the-group-in-ad">Create the group in AD</h2>
 <p>The first step would be to create a group in AD to which sudo will be mapped. In my case, I created a group named &lsquo;sudo&rsquo; to match the Linux counterpart. To do this, navigate to Server Manager -&gt; Active Directory Users and Computers -&gt; Users. Then, right-click and go to New -&gt; Group. In the name, type &lsquo;sudo&rsquo;. After the item is created, it should look like:</p>
 <p><img src="/images/blogs/sudo_group.png" alt="sudo group in AD"></p>
-<h2 id="create-an-external-group-in-freeipa">Create an external group in FreeIPA</h2>
-<p>Navigate to Identity -&gt; Groups -&gt; User Groups -&gt; Add. Create a group named &lsquo;ad_sudo,&rsquo; making sure &lsquo;Group Type&rsquo; is marked as &rsquo;external.&rsquo; It should look like:</p>
-<p><img src="/images/blogs/ad_sudo_group.png" alt="ad_sudo group in FreeIPA"></p>
-<p>Click &lsquo;Add and Edit,&rsquo; then navigate to &lsquo;External.&rsquo; Click on &lsquo;add&rsquo; and input &lsquo;<a href="mailto:sudo@win.mydomain.local">sudo@win.mydomain.local</a>&rsquo; and select &lsquo;Add.&rsquo; It should look something like:</p>
-<p><img src="/images/blogs/external_sudo_group.png" alt="external sudo group in FreeIPA"></p>
 <h2 id="create-policies">Create policies</h2>
-<p>After you&rsquo;ve included your external group, you can modify policies as you wish. These will apply to members of the AD group. To allow the &lsquo;ad_sudo&rsquo; group to issue sudo commands, navigate to Policy -&gt; Sudo -&gt; Sudo Rules. Here, you can create a new rule or directly add it to the &lsquo;All&rsquo; rule. In my case, I created a rule titled &lsquo;sudorule&rsquo;. Click on edit and under the &lsquo;Who&rsquo; section add the mapped group.</p>
-<p>This still does not allow &lsquo;ad_sudo&rsquo; members access to restricted resources or commands. To allow them to do so, scroll down to &lsquo;Run Commands&rsquo; and click &lsquo;Add&rsquo; under &lsquo;Sudo Allow Commands&rsquo;. The only pre-generated rule is the &lsquo;All&rsquo; rule. This will essentially make users root (very dangerous). It should look something like:</p>
-<p><img src="/images/blogs/ad_sudo_rule.png" alt="ad_sudo rule in FreeIPA"></p>
+<p>Navigate to Policy -&gt; Sudo -&gt; Sudo Rules. Here, you can create a new rule or directly use the &lsquo;All&rsquo; rule. In my case, I created a rule titled &lsquo;sudorule&rsquo;.</p>
+<p><img src="/images/blogs/ad_sudo_rule.png" alt="sudorule in FreeIPA"></p>
+<p>To allow commands, navigate to &lsquo;Run Commands&rsquo; and click &lsquo;Any Command&rsquo;. This will essentially make users root (very dangerous). It should look something like:</p>
+<p><img src="/images/blogs/allow_any_command.png" alt="allow any command"></p>
+<h2 id="add-the-external-group-to-the-sudo-rule">Add the external group to the sudo rule</h2>
+<p>Connect to your FreeIPA server as an admin. Then issue the command</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>ipa sudorule-add-user sudorule --groups <span style="color:#e6db74">&#39;sudo@win.mydomain.com&#39;</span></span></span></code></pre></div>
+<p>This will map the external AD group to the sudo rule you just created. Navigate to the FreeIPA web interface under Policy -&gt; Sudo -&gt; Sudo Rules -&gt; sudorule and It should look like:</p>
+<p><img src="/images/blogs/external_group_sudorule.png" alt="external group in sudorule"></p>
 <h2 id="done">Done!</h2>
 <p>Once everything is set-up, members of this group should be limited/allowed to elements and commands as defined by the policies set in place.</p>
 
@@ -308,8 +309,8 @@ Map an Active Directory group to sudo in Linux | Kovasky Buezo
   <ul>
     <li><a href="#intro">Intro</a></li>
     <li><a href="#create-the-group-in-ad">Create the group in AD</a></li>
-    <li><a href="#create-an-external-group-in-freeipa">Create an external group in FreeIPA</a></li>
     <li><a href="#create-policies">Create policies</a></li>
+    <li><a href="#add-the-external-group-to-the-sudo-rule">Add the external group to the sudo rule</a></li>
     <li><a href="#done">Done!</a></li>
   </ul>
 </nav>

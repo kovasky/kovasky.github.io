@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Suricata on Kovasky Buezo</title>
+    <link>https://kovasky.me/tags/suricata/</link>
+    <description>Recent content in Suricata on Kovasky Buezo</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 13 Sep 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://kovasky.me/tags/suricata/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Whitelisting in Suricata Package for PfSense</title>
+      <link>https://kovasky.me/blogs/whitelist/</link>
+      <pubDate>Wed, 13 Sep 2023 00:00:00 +0000</pubDate>
+      
+      <guid>https://kovasky.me/blogs/whitelist/</guid>
+      <description>Intro After tirelessly looking for a solution in order to dynamically create a whitelist for Suricata based on DNS, I decided to create my own.
+Download the necessary files Create a whitelist file with all the domains you wish whitelisted. A useful starting point is anudeepND&amp;rsquo;s collection of commonly white listed domains. After that, download my generateRules.py script.
+Place these files in a directory of your choice on your PfSense host.</description>
+    </item>
+    
+  </channel>
+</rss>
