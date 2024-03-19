@@ -25,7 +25,7 @@ Create the group in AD The first step would be to create a group in AD to which 
       <guid>https://kovasky.me/blogs/no_domain_login/</guid>
       <description>Intro After creating a trust in FreeIPA, I kept having to write the full domain alongside my username whenever I tried to access the system. These are the steps I took to log in only with my username.
 Editing SSSD.conf Navigate to /etc/sssd/ and open sssd.conf in an elevated text editor. It should look something like
-[domain/lin.mydomain.com] ... [sssd] services = nss, pam, ssh, sudo domains = lin.mydomain.com Under [sssd], modify the domains line and add your ad domain.</description>
+[domain/lin.mydomain.com] ... [sssd] services = nss, pam, ssh, sudo domains = lin.mydomain.com Before [sssd], add your trusted domain.</description>
     </item>
     
     <item>
