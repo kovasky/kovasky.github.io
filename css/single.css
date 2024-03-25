@@ -167,7 +167,7 @@
 
 #single .sticky-sidebar ::-webkit-scrollbar {
     height: 0px;
-    width: 8px;
+    width: 0px;
 }
 
 /* Tags */
