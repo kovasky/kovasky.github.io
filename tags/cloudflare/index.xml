@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Cloudflare on Kovasky Buezo</title>
+    <link>https://kovasky.me/tags/cloudflare/</link>
+    <description>Recent content in Cloudflare on Kovasky Buezo</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 25 Mar 2024 00:00:00 +0000</lastBuildDate><atom:link href="https://kovasky.me/tags/cloudflare/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Using Fail2Ban with Cloudflare on a free account</title>
+      <link>https://kovasky.me/blogs/cloudflare_fail2ban/</link>
+      <pubDate>Mon, 25 Mar 2024 00:00:00 +0000</pubDate>
+      
+      <guid>https://kovasky.me/blogs/cloudflare_fail2ban/</guid>
+      <description>Intro To better protect my web accessible services, I decided to use Fail2Ban in conjunction with Cloudflare&amp;rsquo;s WAF to block IPs with more than 3 failed login attempts. I already leverage Cloudflare&amp;rsquo;s CDN and geo-blocking capabilities on my homelab, so I opted to utilize their WAF to block access to potential attackers.
+On the free tier, the WAF is limited to 5 rules, which can easily reach their limit. A workaround is to create a rule that uses a blocklist and then with the Lists API, update it as required.</description>
+    </item>
+    
+  </channel>
+</rss>

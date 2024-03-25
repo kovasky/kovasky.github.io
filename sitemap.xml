@@ -2,25 +2,37 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://kovasky.me/tags/active-directory/</loc>
-    <lastmod>2024-02-21T00:00:00+00:00</lastmod>
-  </url><url>
     <loc>https://kovasky.me/blogs/</loc>
+    <lastmod>2024-03-25T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/cloudflare/</loc>
+    <lastmod>2024-03-25T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/docker/</loc>
+    <lastmod>2024-03-25T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/fail2ban/</loc>
+    <lastmod>2024-03-25T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/</loc>
+    <lastmod>2024-03-25T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/linux/</loc>
+    <lastmod>2024-03-25T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/</loc>
+    <lastmod>2024-03-25T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/blogs/cloudflare_fail2ban/</loc>
+    <lastmod>2024-03-25T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/active-directory/</loc>
     <lastmod>2024-02-21T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://kovasky.me/tags/freeipa/</loc>
     <lastmod>2024-02-21T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://kovasky.me/</loc>
-    <lastmod>2024-02-21T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>https://kovasky.me/tags/linux/</loc>
-    <lastmod>2024-02-21T00:00:00+00:00</lastmod>
-  </url><url>
     <loc>https://kovasky.me/blogs/mapping_sudo/</loc>
-    <lastmod>2024-02-21T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>https://kovasky.me/tags/</loc>
     <lastmod>2024-02-21T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://kovasky.me/tags/windows/</loc>
