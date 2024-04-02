@@ -6,7 +6,18 @@
     <description>Recent content in FreeIPA on Kovasky Buezo</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 21 Feb 2024 00:00:00 +0000</lastBuildDate><atom:link href="https://kovasky.me/tags/freeipa/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 02 Apr 2024 00:00:00 +0000</lastBuildDate><atom:link href="https://kovasky.me/tags/freeipa/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Replace the default shell for domain users on Linux</title>
+      <link>https://kovasky.me/blogs/login_shell/</link>
+      <pubDate>Tue, 02 Apr 2024 00:00:00 +0000</pubDate>
+      
+      <guid>https://kovasky.me/blogs/login_shell/</guid>
+      <description>Intro After setting up the AD trust, every time I logged in the shell defaulted to /bin/sh. To change it to /bin/bash or any other shell of your choice you can do the following.
+Editing SSSD.conf Navigate to /etc/sssd/ and open sssd.conf in an elevated text editor. It should look something like
+[domain/lin.mydomain.com] ... use_fully_qualified_names = false [domain/lin.mydomain.com/win.mydomain.com] use_fully_qualified_names = false [sssd] ... After each domain, add your override shell. Something like:</description>
+    </item>
+    
     <item>
       <title>Map an Active Directory group to sudo in Linux</title>
       <link>https://kovasky.me/blogs/mapping_sudo/</link>

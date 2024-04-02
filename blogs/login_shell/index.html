@@ -28,14 +28,16 @@
 
 
 
-<meta property="og:title" content="Windows" />
-<meta property="og:description" content="Personal Portfolio" />
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://kovasky.me/tags/windows/" /><meta property="og:site_name" content="Kovasky Buezo" />
+<meta property="og:title" content="Replace the default shell for domain users on Linux" />
+<meta property="og:description" content="Replace the default shell for domain users on Linux in favour of bash." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://kovasky.me/blogs/login_shell/" /><meta property="article:section" content="blogs" />
+<meta property="article:published_time" content="2024-04-02T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-04-02T00:00:00+00:00" /><meta property="og:site_name" content="Kovasky Buezo" />
 
 <meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Windows"/>
-<meta name="twitter:description" content="Personal Portfolio"/>
+<meta name="twitter:title" content="Replace the default shell for domain users on Linux"/>
+<meta name="twitter:description" content="Replace the default shell for domain users on Linux in favour of bash."/>
 
 
 <link rel="stylesheet" href="/bootstrap-5/css/bootstrap.min.css" media="all"><link rel="stylesheet" href="/css/header.css" media="all">
@@ -98,11 +100,14 @@
     }
 </style>
 
-<meta name="description" content="Windows of Kovasky Buezo">
-<link rel="stylesheet" href="/css/list.css" media="all">
+<meta name="description" content="Replace the default shell for domain users on Linux in favour of bash.">
+<link rel="stylesheet" href="/css/single.css">
+
+
+<script defer src="/fontawesome-6/all-6.4.2.js"></script>
 
   <title>
-Windows | Kovasky Buezo
+Replace the default shell for domain users on Linux | Kovasky Buezo
 
   </title>
 </head>
@@ -246,97 +251,177 @@ Windows | Kovasky Buezo
     </nav>
 </header>
 <div id="content">
-<div class="container pt-5" id="list-page">
-    <h2 class="text-center pb-2">Windows</h2>
-    <div class="row">
-        
-        <div class="col-lg-4 col-md-6 my-3">
-            <div class="card-columns">
-                <div class="card h-100">
-                    
-                    <div class="card-header">
-                        <a href="/blogs/mapping_sudo/">
-                            <img src="/images/blogs/mapping_sudo.png" class="card-img-top" alt="Map an Active Directory group to sudo in Linux">
-                        </a>
-                    </div>
-                    
-                    <div class="card-body bg-transparent p-4 shadow-sm">
-                        <a href="/blogs/mapping_sudo/" class="primary-font card-title">
-                            <h5 class="card-title bg-transparent" title="Map an Active Directory group to sudo in Linux">Map an Active Directory …</h5>
-                        </a>
-                        <div class="card-text secondary-font">
-                            <p>Intro After creating my domain trust between AD and FreeIPA, I was left wanting to access restricted resources in Linux using my AD accounts. To circumvent this, I mapped a group from AD to FreeIPA and gave it the appropriate permissions.
-Create the group in AD The first step would be to create a …</p>
-                        </div>
-                    </div>
-                    <div class="mt-auto post-footer bg-transparent py-3">
-                        <span class="float-start bg-transparent">Feb 21, 2024</span>
-                        <a href="/blogs/mapping_sudo/" class="float-end btn btn-outline-info btn-sm">Read</a>
-                    </div>
-                </div>
+<section id="single">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-sm-12 col-md-12 col-lg-9">
+        <div class="pr-lg-4">
+          <div class="title mb-5">
+            <h1 class="text-center mb-4">Replace the default shell for domain users on Linux</h1>
+            <div class="text-center">
+              Kovasky Buezo 
+              <small>|</small>
+              Apr 2, 2024
+
+              
+              <span id="readingTime">
+                min read
+              </span>
+              
             </div>
+          </div>
+          
+          <div class="featured-image">
+            <img class="img-fluid mx-auto d-block" src="/images/blogs/no_domain_login.png" alt="Replace the default shell for domain users on Linux">
+          </div>
+          
+          <article class="page-content  p-2">
+          <h2 id="intro">Intro</h2>
+<p>After setting up the AD trust, every time I logged in the shell defaulted to /bin/sh. To change it to /bin/bash or any other shell of your choice you can do the following.</p>
+<h2 id="editing-sssdconf">Editing SSSD.conf</h2>
+<p>Navigate to /etc/sssd/ and open sssd.conf in an elevated text editor. It should look something like</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#f92672">[</span>domain/lin.mydomain.com<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>...
+</span></span><span style="display:flex;"><span>use_fully_qualified_names <span style="color:#f92672">=</span> false
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>domain/lin.mydomain.com/win.mydomain.com<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>use_fully_qualified_names <span style="color:#f92672">=</span> false
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>sssd<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>...</span></span></code></pre></div>
+<p>After each domain, add your override shell. Something like:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#f92672">[</span>domain/lin.mydomain.com<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>...
+</span></span><span style="display:flex;"><span>use_fully_qualified_names <span style="color:#f92672">=</span> false
+</span></span><span style="display:flex;"><span>override_shell <span style="color:#f92672">=</span> /bin/bash
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>domain/lin.mydomain.com/win.mydomain.com<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>use_fully_qualified_names <span style="color:#f92672">=</span> false
+</span></span><span style="display:flex;"><span>override_shell <span style="color:#f92672">=</span> /bin/bash
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>sssd<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span>...</span></span></code></pre></div>
+<h2 id="restart-sssd-service">Restart SSSD service</h2>
+<p>After the modification has taken place, just restart the service with the following command:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>sudo systemctl restart sssd</span></span></code></pre></div>
+<p>You&rsquo;re done! Next time you log in with your domain credentials, your default shell will be overriden.</p>
+
+          </article>
+          
         </div>
-        
-        <div class="col-lg-4 col-md-6 my-3">
-            <div class="card-columns">
-                <div class="card h-100">
-                    
-                    <div class="card-header">
-                        <a href="/blogs/no_domain_login/">
-                            <img src="/images/blogs/no_domain_login.png" class="card-img-top" alt="Log in to Linux using AD credentials without specifying the domain">
-                        </a>
-                    </div>
-                    
-                    <div class="card-body bg-transparent p-4 shadow-sm">
-                        <a href="/blogs/no_domain_login/" class="primary-font card-title">
-                            <h5 class="card-title bg-transparent" title="Log in to Linux using AD credentials without specifying the domain">Log in to Linux using AD …</h5>
-                        </a>
-                        <div class="card-text secondary-font">
-                            <p>Intro After creating a trust in FreeIPA, I kept having to write the full domain alongside my username whenever I tried to access the system. These are the steps I took to log in only with my username.
-Editing SSSD.conf Navigate to /etc/sssd/ and open sssd.conf in an elevated text editor. It should …</p>
-                        </div>
-                    </div>
-                    <div class="mt-auto post-footer bg-transparent py-3">
-                        <span class="float-start bg-transparent">Feb 16, 2024</span>
-                        <a href="/blogs/no_domain_login/" class="float-end btn btn-outline-info btn-sm">Read</a>
-                    </div>
-                </div>
+      </div>
+      <div class="col-sm-12 col-md-12 col-lg-3">
+        <div id="stickySideBar" class="sticky-sidebar">
+          
+          <aside class="toc">
+              <h5>
+                Table Of Contents
+              </h5>
+              <div class="toc-content">
+                <nav id="TableOfContents">
+  <ul>
+    <li><a href="#intro">Intro</a></li>
+    <li><a href="#editing-sssdconf">Editing SSSD.conf</a></li>
+    <li><a href="#restart-sssd-service">Restart SSSD service</a></li>
+  </ul>
+</nav>
+              </div>
+          </aside>
+          
+
+          
+          <aside class="tags">
+            <h5>Tags</h5>
+            <ul class="tags-ul list-unstyled list-inline">
+              
+              <li class="list-inline-item"><a href="https://kovasky.me/tags/freeipa" target="_blank">FreeIPA</a></li>
+              
+              <li class="list-inline-item"><a href="https://kovasky.me/tags/active-directory" target="_blank">Active Directory</a></li>
+              
+              <li class="list-inline-item"><a href="https://kovasky.me/tags/linux" target="_blank">Linux</a></li>
+              
+              <li class="list-inline-item"><a href="https://kovasky.me/tags/bash" target="_blank">Bash</a></li>
+              
+            </ul>
+          </aside>
+          
+
+          
+          <aside class="social">
+            <h5>Social</h5>
+            <div class="social-content">
+              <ul class="list-inline">
+                <li class="list-inline-item text-center">
+                  <a target="_blank" href="https://twitter.com/share?text=Replace%20the%20default%20shell%20for%20domain%20users%20on%20Linux&url=https%3a%2f%2fkovasky.me%2fblogs%2flogin_shell%2f">
+                    <i class="fab fa-twitter"></i>
+                  </a>
+                </li>
+                <li class="list-inline-item text-center">
+                  <a target="_blank" href="https://api.whatsapp.com/send?text=Replace%20the%20default%20shell%20for%20domain%20users%20on%20Linux: https%3a%2f%2fkovasky.me%2fblogs%2flogin_shell%2f">
+                    <i class="fab fa-whatsapp"></i>
+                  </a>
+                </li>
+                <li class="list-inline-item text-center">
+                  <a target="_blank" href='mailto:?subject=Replace%20the%20default%20shell%20for%20domain%20users%20on%20Linux&amp;body=Check%20out%20this%20site https%3a%2f%2fkovasky.me%2fblogs%2flogin_shell%2f'>
+                    <i class="fa fa-envelope"></i>
+                  </a>
+                </li>
+              </ul>
             </div>
+          </aside>
+          
         </div>
-        
-        <div class="col-lg-4 col-md-6 my-3">
-            <div class="card-columns">
-                <div class="card h-100">
-                    
-                    <div class="card-header">
-                        <a href="/blogs/ad_trust/">
-                            <img src="/images/blogs/ad_trust.png" class="card-img-top" alt="Setting up a cross-domain trust between FreeIPA and AD">
-                        </a>
-                    </div>
-                    
-                    <div class="card-body bg-transparent p-4 shadow-sm">
-                        <a href="/blogs/ad_trust/" class="primary-font card-title">
-                            <h5 class="card-title bg-transparent" title="Setting up a cross-domain trust between FreeIPA and AD">Setting up a cross-domain …</h5>
-                        </a>
-                        <div class="card-text secondary-font">
-                            <p>Intro I&rsquo;ve been playing around with FreeIPA in my homelab for a while and have always wanted to enable seamless authentication between all my hosts regardless of their operating system. I stumbled upon the concept of cross-domain trusts between FreeIPA and Active Directory which allows us to …</p>
-                        </div>
-                    </div>
-                    <div class="mt-auto post-footer bg-transparent py-3">
-                        <span class="float-start bg-transparent">Feb 16, 2024</span>
-                        <a href="/blogs/ad_trust/" class="float-end btn btn-outline-info btn-sm">Read</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="row justify-content-center">
-            <div class="col-auto m-3">
-                
-            </div>
-        </div>
+      </div>
     </div>
+  </div>
+  <button class="p-2 px-3" onclick="topFunction()" id="topScroll">
+    <i class="fas fa-angle-up"></i>
+  </button>
+</section>
+
+
+<div class="progress">
+  <div id="scroll-progress-bar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
 </div>
+<Script src="/js/scrollProgressBar.js"></script>
+
+
+<script>
+  var topScroll = document.getElementById("topScroll");
+  window.onscroll = function() {scrollFunction()};
+
+  function scrollFunction() {
+    if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+      topScroll.style.display = "block";
+    } else {
+      topScroll.style.display = "none";
+    }
+  }
+
+  function topFunction() {
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+  }
+
+  
+  let stickySideBarElem = document.getElementById("stickySideBar");
+  let stickyNavBar =  false ;
+  if(stickyNavBar) {
+    let headerElem = document.getElementById("profileHeader");
+    let headerHeight = headerElem.offsetHeight + 15;
+    stickySideBarElem.style.top = headerHeight + "px";
+  } else {
+    stickySideBarElem.style.top = "50px";
+  }
+</script>
+
+
+<script src="/js/readingTime.js"></script>
+
+
+
+<script async defer src="https://cusdis.agrajag.cloud/js/cusdis.es.js"></script>
+
+
 
   </div><footer>
     
