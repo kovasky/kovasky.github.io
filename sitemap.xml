@@ -2,28 +2,40 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
+    <loc>https://kovasky.me/blogs/</loc>
+    <lastmod>2024-04-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/blogs/disk_passthrough/</loc>
+    <lastmod>2024-04-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/</loc>
+    <lastmod>2024-04-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/linux/</loc>
+    <lastmod>2024-04-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/passthrough/</loc>
+    <lastmod>2024-04-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/proxmox/</loc>
+    <lastmod>2024-04-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/</loc>
+    <lastmod>2024-04-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/truenas/</loc>
+    <lastmod>2024-04-03T00:00:00+00:00</lastmod>
+  </url><url>
     <loc>https://kovasky.me/tags/active-directory/</loc>
     <lastmod>2024-04-02T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://kovasky.me/tags/bash/</loc>
     <lastmod>2024-04-02T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://kovasky.me/blogs/</loc>
-    <lastmod>2024-04-02T00:00:00+00:00</lastmod>
-  </url><url>
     <loc>https://kovasky.me/tags/freeipa/</loc>
     <lastmod>2024-04-02T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://kovasky.me/</loc>
-    <lastmod>2024-04-02T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>https://kovasky.me/tags/linux/</loc>
-    <lastmod>2024-04-02T00:00:00+00:00</lastmod>
-  </url><url>
     <loc>https://kovasky.me/blogs/login_shell/</loc>
-    <lastmod>2024-04-02T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>https://kovasky.me/tags/</loc>
     <lastmod>2024-04-02T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://kovasky.me/tags/cloudflare/</loc>
@@ -52,9 +64,6 @@
   </url><url>
     <loc>https://kovasky.me/blogs/ad_trust/</loc>
     <lastmod>2024-02-16T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>https://kovasky.me/tags/proxmox/</loc>
-    <lastmod>2023-11-01T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://kovasky.me/blogs/oneshot/</loc>
     <lastmod>2023-11-01T00:00:00+00:00</lastmod>

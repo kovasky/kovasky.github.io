@@ -437,6 +437,30 @@ Log in to Linux using AD credentials without specifying the domain | Kovasky Bue
             <div class="card h-100">
                 
                 <div class="card-header">
+                    <a href="/blogs/disk_passthrough/">
+                        <img src="/images/blogs/truenas_disk.png" class="card-img-top" alt="Disk passthrough for vms in Proxmox">
+                    </a>
+                </div>
+                
+                <div class="card-body bg-transparent p-3 shadow-sm">
+                    <a href="/blogs/disk_passthrough/" class="primary-font card-title">
+                        <h5 class="card-title bg-transparent" title="Disk passthrough for vms in Proxmox">Disk passthrough for vms …</h5>
+                    </a>
+                    <div class="card-text secondary-font">
+                        <p>Intro While setting up my hosts with FreeIPA, I noticed that home directories were not being created when logging in through ssh. Looking online it seems that most people just use NFS shares to keep home directories the same across devices but I did not want to set up NFS home shares. Fixing this in …</p>
+                    </div>
+                </div>
+                <div class="mt-auto card-footer">
+                    <span class="float-start">Apr 3, 2024</span>
+                    <a href="/blogs/disk_passthrough/" class="float-end btn btn-outline-info btn-sm">Read</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 pt-2">
+            <div class="card h-100">
+                
+                <div class="card-header">
                     <a href="/blogs/login_shell/">
                         <img src="/images/blogs/no_domain_login.png" class="card-img-top" alt="Replace the default shell for domain users on Linux">
                     </a>
@@ -478,31 +502,6 @@ Editing SSSD.conf Navigate to /etc/sssd/ and open sssd.conf in an elevated text 
                 <div class="mt-auto card-footer">
                     <span class="float-start">Mar 25, 2024</span>
                     <a href="/blogs/cloudflare_fail2ban/" class="float-end btn btn-outline-info btn-sm">Read</a>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4 col-md-6 pt-2">
-            <div class="card h-100">
-                
-                <div class="card-header">
-                    <a href="/blogs/mapping_sudo/">
-                        <img src="/images/blogs/mapping_sudo.png" class="card-img-top" alt="Map an Active Directory group to sudo in Linux">
-                    </a>
-                </div>
-                
-                <div class="card-body bg-transparent p-3 shadow-sm">
-                    <a href="/blogs/mapping_sudo/" class="primary-font card-title">
-                        <h5 class="card-title bg-transparent" title="Map an Active Directory group to sudo in Linux">Map an Active Directory …</h5>
-                    </a>
-                    <div class="card-text secondary-font">
-                        <p>Intro After creating my domain trust between AD and FreeIPA, I was left wanting to access restricted resources in Linux using my AD accounts. To circumvent this, I mapped a group from AD to FreeIPA and gave it the appropriate permissions.
-Create the group in AD The first step would be to create a …</p>
-                    </div>
-                </div>
-                <div class="mt-auto card-footer">
-                    <span class="float-start">Feb 21, 2024</span>
-                    <a href="/blogs/mapping_sudo/" class="float-end btn btn-outline-info btn-sm">Read</a>
                 </div>
             </div>
         </div>
