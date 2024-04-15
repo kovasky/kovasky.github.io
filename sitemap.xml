@@ -2,34 +2,46 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
+    <loc>https://kovasky.me/tags/bash/</loc>
+    <lastmod>2024-04-15T00:00:00+00:00</lastmod>
+  </url><url>
     <loc>https://kovasky.me/blogs/</loc>
-    <lastmod>2024-04-04T00:00:00+00:00</lastmod>
+    <lastmod>2024-04-15T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/dell/</loc>
+    <lastmod>2024-04-15T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/idrac/</loc>
+    <lastmod>2024-04-15T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/blogs/fan_control/</loc>
+    <lastmod>2024-04-15T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/</loc>
+    <lastmod>2024-04-15T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/linux/</loc>
+    <lastmod>2024-04-15T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/poweredge/</loc>
+    <lastmod>2024-04-15T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/proxmox/</loc>
+    <lastmod>2024-04-15T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://kovasky.me/tags/</loc>
+    <lastmod>2024-04-15T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://kovasky.me/blogs/disk_passthrough/</loc>
     <lastmod>2024-04-04T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://kovasky.me/</loc>
-    <lastmod>2024-04-04T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>https://kovasky.me/tags/linux/</loc>
-    <lastmod>2024-04-04T00:00:00+00:00</lastmod>
-  </url><url>
     <loc>https://kovasky.me/tags/passthrough/</loc>
-    <lastmod>2024-04-04T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>https://kovasky.me/tags/proxmox/</loc>
-    <lastmod>2024-04-04T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>https://kovasky.me/tags/</loc>
     <lastmod>2024-04-04T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://kovasky.me/tags/truenas/</loc>
     <lastmod>2024-04-04T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://kovasky.me/tags/active-directory/</loc>
-    <lastmod>2024-04-02T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>https://kovasky.me/tags/bash/</loc>
     <lastmod>2024-04-02T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://kovasky.me/tags/freeipa/</loc>

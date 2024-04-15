@@ -451,6 +451,30 @@ Starting a VM in Proxmox without Quorum | Kovasky Buezo
             <div class="card h-100">
                 
                 <div class="card-header">
+                    <a href="/blogs/fan_control/">
+                        <img loading="lazy" src="/images/blogs/idrac.webp" class="card-img-top" alt="iDRAC 9 manual fan control on Dell PowerEdge servers">
+                    </a>
+                </div>
+                
+                <div class="card-body bg-transparent p-3 shadow-sm">
+                    <a href="/blogs/fan_control/" class="primary-font card-title">
+                        <h5 class="card-title bg-transparent" title="iDRAC 9 manual fan control on Dell PowerEdge servers">iDRAC 9 manual fan …</h5>
+                    </a>
+                    <div class="card-text secondary-font">
+                        <p>Intro I recently acquired a Dell Poweredge T440, and after installing a GPU the fans skyrocketed. This turned the server into a noise machine. To solve this, I created a script that disables third-party PCI mode and based on a threshold, set the fan speed to 20% or to be controlled by Dell&rsquo;s …</p>
+                    </div>
+                </div>
+                <div class="mt-auto card-footer">
+                    <span class="float-start">Apr 15, 2024</span>
+                    <a href="/blogs/fan_control/" class="float-end btn btn-outline-info btn-sm">Read</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 pt-2">
+            <div class="card h-100">
+                
+                <div class="card-header">
                     <a href="/blogs/disk_passthrough/">
                         <img loading="lazy" src="/images/blogs/truenas_disk.webp" class="card-img-top" alt="Disk passthrough for vms in Proxmox">
                     </a>
@@ -493,30 +517,6 @@ Editing SSSD.conf Navigate to /etc/sssd/ and open sssd.conf in an elevated text 
                 <div class="mt-auto card-footer">
                     <span class="float-start">Apr 2, 2024</span>
                     <a href="/blogs/login_shell/" class="float-end btn btn-outline-info btn-sm">Read</a>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4 col-md-6 pt-2">
-            <div class="card h-100">
-                
-                <div class="card-header">
-                    <a href="/blogs/cloudflare_fail2ban/">
-                        <img loading="lazy" src="/images/blogs/cloudflare_fail2ban_logs.webp" class="card-img-top" alt="Using Fail2Ban with Cloudflare on a free account">
-                    </a>
-                </div>
-                
-                <div class="card-body bg-transparent p-3 shadow-sm">
-                    <a href="/blogs/cloudflare_fail2ban/" class="primary-font card-title">
-                        <h5 class="card-title bg-transparent" title="Using Fail2Ban with Cloudflare on a free account">Using Fail2Ban with …</h5>
-                    </a>
-                    <div class="card-text secondary-font">
-                        <p>Intro To better protect my web accessible services, I decided to use Fail2Ban in conjunction with Cloudflare&rsquo;s WAF to block IPs with more than 3 failed login attempts. I already leverage Cloudflare&rsquo;s CDN and geo-blocking capabilities on my homelab, so I opted to utilize their WAF to …</p>
-                    </div>
-                </div>
-                <div class="mt-auto card-footer">
-                    <span class="float-start">Mar 25, 2024</span>
-                    <a href="/blogs/cloudflare_fail2ban/" class="float-end btn btn-outline-info btn-sm">Read</a>
                 </div>
             </div>
         </div>
