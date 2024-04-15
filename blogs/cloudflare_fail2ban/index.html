@@ -145,7 +145,7 @@ Using Fail2Ban with Cloudflare on a free account | Kovasky Buezo
             <a class="navbar-brand primary-font text-wrap" href="/">
                 
                 <img src="/fav.ico" width="30" height="30"
-                    class="d-inline-block align-top">
+                    class="d-inline-block align-top" alt="favicon">
                 Kovasky Buezo
                 
             </a>
@@ -272,7 +272,7 @@ Using Fail2Ban with Cloudflare on a free account | Kovasky Buezo
           </div>
           
           <div class="featured-image">
-            <img class="img-fluid mx-auto d-block" src="/images/blogs/cloudflare_fail2ban_logs.png" alt="Using Fail2Ban with Cloudflare on a free account">
+            <img class="img-fluid mx-auto d-block" src="/images/blogs/cloudflare_fail2ban_logs.webp" alt="Using Fail2Ban with Cloudflare on a free account">
           </div>
           
           <article class="page-content  p-2">
@@ -281,11 +281,11 @@ Using Fail2Ban with Cloudflare on a free account | Kovasky Buezo
 <p>On the free tier, the WAF is limited to 5 rules, which can easily reach their limit. A workaround is to create a rule that uses a blocklist and then with the Lists API, update it as required.</p>
 <h2 id="creating-an-api-key">Creating an API key</h2>
 <p>Log in to Cloudflare and navigate to My Profile -&gt; API Tokens-&gt; Create a Token-&gt; Create a Custom Token. Give your token a name and make sure the permissions are as follows:</p>
-<p><img src="/images/blogs/cloudflare_token.png" alt="cloudflare token"></p>
+<p><img src="/images/blogs/cloudflare_token.webp" alt="cloudflare token"></p>
 <p>Keep this token handy as it will be used later.</p>
 <h2 id="creating-a-list">Creating a list</h2>
 <p>Log in to Cloudflare, navigate to Manage Account -&gt; Configurations -&gt; Lists. Under Lists, create a new list with type IP and name it &ldquo;block_list.&rdquo; It should look something like:</p>
-<p><img src="/images/blogs/cloudflare_list.png" alt="block_list"></p>
+<p><img src="/images/blogs/cloudflare_list.webp" alt="block_list"></p>
 <p>Make sure to write down your user id plus the id of this list. You can get it by clicking edit and taking a look at the url. It should look something like:</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>https://dash.cloudflare.com/&lt;user id&gt;/configurations/lists/&lt;list id&gt;</span></span></code></pre></div>
 <h2 id="modifying-the-list">Modifying the list</h2>
@@ -560,7 +560,7 @@ Using Fail2Ban with Cloudflare on a free account | Kovasky Buezo
                 
                 <div class="card-header">
                     <a href="/blogs/disk_passthrough/">
-                        <img src="/images/blogs/truenas_disk.png" class="card-img-top" alt="Disk passthrough for vms in Proxmox">
+                        <img loading="lazy" src="/images/blogs/truenas_disk.webp" class="card-img-top" alt="Disk passthrough for vms in Proxmox">
                     </a>
                 </div>
                 
@@ -585,7 +585,7 @@ Figuring out the id of the disk Typically, disks are labeled as /dev/sdX, but th
                 
                 <div class="card-header">
                     <a href="/blogs/login_shell/">
-                        <img src="/images/blogs/no_domain_login.png" class="card-img-top" alt="Replace the default shell for domain users on Linux">
+                        <img loading="lazy" src="/images/blogs/no_domain_login.webp" class="card-img-top" alt="Replace the default shell for domain users on Linux">
                     </a>
                 </div>
                 
@@ -610,7 +610,7 @@ Editing SSSD.conf Navigate to /etc/sssd/ and open sssd.conf in an elevated text 
                 
                 <div class="card-header">
                     <a href="/blogs/cloudflare_fail2ban/">
-                        <img src="/images/blogs/cloudflare_fail2ban_logs.png" class="card-img-top" alt="Using Fail2Ban with Cloudflare on a free account">
+                        <img loading="lazy" src="/images/blogs/cloudflare_fail2ban_logs.webp" class="card-img-top" alt="Using Fail2Ban with Cloudflare on a free account">
                     </a>
                 </div>
                 

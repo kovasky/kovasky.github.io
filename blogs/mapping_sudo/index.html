@@ -145,7 +145,7 @@ Map an Active Directory group to sudo in Linux | Kovasky Buezo
             <a class="navbar-brand primary-font text-wrap" href="/">
                 
                 <img src="/fav.ico" width="30" height="30"
-                    class="d-inline-block align-top">
+                    class="d-inline-block align-top" alt="favicon">
                 Kovasky Buezo
                 
             </a>
@@ -272,7 +272,7 @@ Map an Active Directory group to sudo in Linux | Kovasky Buezo
           </div>
           
           <div class="featured-image">
-            <img class="img-fluid mx-auto d-block" src="/images/blogs/mapping_sudo.png" alt="Map an Active Directory group to sudo in Linux">
+            <img class="img-fluid mx-auto d-block" src="/images/blogs/mapping_sudo.webp" alt="Map an Active Directory group to sudo in Linux">
           </div>
           
           <article class="page-content  p-2">
@@ -280,17 +280,17 @@ Map an Active Directory group to sudo in Linux | Kovasky Buezo
 <p>After creating my domain trust between AD and FreeIPA, I was left wanting to access restricted resources in Linux using my AD accounts. To circumvent this, I mapped a group from AD to FreeIPA and gave it the appropriate permissions.</p>
 <h2 id="create-the-group-in-ad">Create the group in AD</h2>
 <p>The first step would be to create a group in AD to which sudo will be mapped. In my case, I created a group named &lsquo;sudo&rsquo; to match the Linux counterpart. To do this, navigate to Server Manager -&gt; Active Directory Users and Computers -&gt; Users. Then, right-click and go to New -&gt; Group. In the name, type &lsquo;sudo&rsquo;. After the item is created, it should look like:</p>
-<p><img src="/images/blogs/sudo_group.png" alt="sudo group in AD"></p>
+<p><img src="/images/blogs/sudo_group.webp" alt="sudo group in AD"></p>
 <h2 id="create-policies">Create policies</h2>
 <p>Navigate to Policy -&gt; Sudo -&gt; Sudo Rules. Here, you can create a new rule or directly use the &lsquo;All&rsquo; rule. In my case, I created a rule titled &lsquo;sudorule&rsquo;.</p>
-<p><img src="/images/blogs/ad_sudo_rule.png" alt="sudorule in FreeIPA"></p>
+<p><img src="/images/blogs/ad_sudo_rule.webp" alt="sudorule in FreeIPA"></p>
 <p>To allow commands, navigate to &lsquo;Run Commands&rsquo; and click &lsquo;Any Command&rsquo;. This will essentially make users root (very dangerous). It should look something like:</p>
-<p><img src="/images/blogs/allow_any_command.png" alt="allow any command"></p>
+<p><img src="/images/blogs/allow_any_command.webp" alt="allow any command"></p>
 <h2 id="add-the-external-group-to-the-sudo-rule">Add the external group to the sudo rule</h2>
 <p>Connect to your FreeIPA server as an admin. Then issue the command</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>ipa sudorule-add-user sudorule --groups <span style="color:#e6db74">&#39;sudo@win.mydomain.com&#39;</span></span></span></code></pre></div>
 <p>This will map the external AD group to the sudo rule you just created. Navigate to the FreeIPA web interface under Policy -&gt; Sudo -&gt; Sudo Rules -&gt; sudorule and It should look like:</p>
-<p><img src="/images/blogs/external_group_sudorule.png" alt="external group in sudorule"></p>
+<p><img src="/images/blogs/external_group_sudorule.webp" alt="external group in sudorule"></p>
 <h2 id="done">Done!</h2>
 <p>Once everything is set-up, members of this group should be limited/allowed to elements and commands as defined by the policies set in place.</p>
 
@@ -442,7 +442,7 @@ Map an Active Directory group to sudo in Linux | Kovasky Buezo
                 
                 <div class="card-header">
                     <a href="/blogs/disk_passthrough/">
-                        <img src="/images/blogs/truenas_disk.png" class="card-img-top" alt="Disk passthrough for vms in Proxmox">
+                        <img loading="lazy" src="/images/blogs/truenas_disk.webp" class="card-img-top" alt="Disk passthrough for vms in Proxmox">
                     </a>
                 </div>
                 
@@ -467,7 +467,7 @@ Figuring out the id of the disk Typically, disks are labeled as /dev/sdX, but th
                 
                 <div class="card-header">
                     <a href="/blogs/login_shell/">
-                        <img src="/images/blogs/no_domain_login.png" class="card-img-top" alt="Replace the default shell for domain users on Linux">
+                        <img loading="lazy" src="/images/blogs/no_domain_login.webp" class="card-img-top" alt="Replace the default shell for domain users on Linux">
                     </a>
                 </div>
                 
@@ -492,7 +492,7 @@ Editing SSSD.conf Navigate to /etc/sssd/ and open sssd.conf in an elevated text 
                 
                 <div class="card-header">
                     <a href="/blogs/cloudflare_fail2ban/">
-                        <img src="/images/blogs/cloudflare_fail2ban_logs.png" class="card-img-top" alt="Using Fail2Ban with Cloudflare on a free account">
+                        <img loading="lazy" src="/images/blogs/cloudflare_fail2ban_logs.webp" class="card-img-top" alt="Using Fail2Ban with Cloudflare on a free account">
                     </a>
                 </div>
                 
