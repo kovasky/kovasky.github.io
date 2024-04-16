@@ -1,21 +1,2 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>TrueNas on Kovasky Buezo</title>
-    <link>https://kovasky.me/tags/truenas/</link>
-    <description>Recent content in TrueNas on Kovasky Buezo</description>
-    <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    <lastBuildDate>Thu, 04 Apr 2024 00:00:00 +0000</lastBuildDate><atom:link href="https://kovasky.me/tags/truenas/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>Disk passthrough for vms in Proxmox</title>
-      <link>https://kovasky.me/blogs/disk_passthrough/</link>
-      <pubDate>Thu, 04 Apr 2024 00:00:00 +0000</pubDate>
-      
-      <guid>https://kovasky.me/blogs/disk_passthrough/</guid>
-      <description>Intro It has always been recommended to give ZFS full disk control, so after placing my raid card in HBA mode, I went ahead and gave full disk control to my TrueNAS vm.
-Figuring out the id of the disk Typically, disks are labeled as /dev/sdX, but this can change when adding other drives or moving them around. To circumvent this, it is better to figure out the specific id of the disk to be passed through.</description>
-    </item>
-    
-  </channel>
-</rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>TrueNas on Kovasky Buezo</title><link>https://kovasky.me/tags/truenas/</link><description>Recent content in TrueNas on Kovasky Buezo</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Thu, 04 Apr 2024 00:00:00 +0000</lastBuildDate><atom:link href="https://kovasky.me/tags/truenas/index.xml" rel="self" type="application/rss+xml"/><item><title>Disk passthrough for vms in Proxmox</title><link>https://kovasky.me/blogs/disk_passthrough/</link><pubDate>Thu, 04 Apr 2024 00:00:00 +0000</pubDate><guid>https://kovasky.me/blogs/disk_passthrough/</guid><description>Intro It has always been recommended to give ZFS full disk control, so after placing my raid card in HBA mode, I went ahead and gave full disk control to my TrueNAS vm.
+Figuring out the id of the disk Typically, disks are labeled as /dev/sdX, but this can change when adding other drives or moving them around. To circumvent this, it is better to figure out the specific id of the disk to be passed through.</description></item></channel></rss>
