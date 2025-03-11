@@ -1,4 +1,16 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Homelab on Kovasky Buezo | Software Developer, Cybersecurity Enthusiast</title><link>https://kovasky.me/tags/homelab/</link><description>Recent content in Homelab on Kovasky Buezo | Software Developer, Cybersecurity Enthusiast</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Mon, 30 Oct 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://kovasky.me/tags/homelab/index.xml" rel="self" type="application/rss+xml"/><item><title>Homelab</title><link>https://kovasky.me/blogs/homelab/</link><pubDate>Mon, 30 Oct 2023 00:00:00 +0000</pubDate><guid>https://kovasky.me/blogs/homelab/</guid><description>Intro This is just a post to describe my homelab setup and make it linkable where needed (like in my resume). This is most definitely subject to change at any time as I continue to play with new technologies and keep adding things!
-Hosts My homelab consists of a one node proxmox host and a terramaster NAS.
-The specs are:
-Dell Poweredge T440 2x Xeon Gold 6126 (48 logical cores) 128GB RAM 1x 118GB Intel Optane NVME 2x 1TB MX500 SSD 2x 8TB Toshiba SAS Drive 1x 14TB IronWolf Pro Drive 1x Nvidia Quadro M2000 For storage I have a TerraMaster F2-220 running DSM through tinycore with 2x 6TB Ironwolf HDDs.</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Homelab on Kovasky Buezo | Software Developer, Cybersecurity Enthusiast</title><link>https://kovasky.me/tags/homelab/</link><description>Recent content in Homelab on Kovasky Buezo | Software Developer, Cybersecurity Enthusiast</description><generator>Hugo</generator><language>en</language><lastBuildDate>Mon, 30 Oct 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://kovasky.me/tags/homelab/index.xml" rel="self" type="application/rss+xml"/><item><title>Homelab</title><link>https://kovasky.me/blogs/homelab/</link><pubDate>Mon, 30 Oct 2023 00:00:00 +0000</pubDate><guid>https://kovasky.me/blogs/homelab/</guid><description>&lt;h2 id="intro">Intro&lt;/h2>
+&lt;p>This is just a post to describe my homelab setup and make it linkable where needed (like in my resume). This is most definitely subject to change at any time as I continue to play with new technologies and keep adding things!&lt;/p>
+&lt;h2 id="hosts">Hosts&lt;/h2>
+&lt;p>My homelab consists of a one node proxmox host and a terramaster NAS.&lt;/p>
+&lt;p>The specs are:&lt;/p>
+&lt;h5 id="dell-poweredge-t440">Dell Poweredge T440&lt;/h5>
+&lt;ul>
+&lt;li>2x Xeon Gold 6126 (48 logical cores)&lt;/li>
+&lt;li>128GB RAM&lt;/li>
+&lt;li>1x 118GB Intel Optane NVME&lt;/li>
+&lt;li>2x 1TB MX500 SSD&lt;/li>
+&lt;li>2x 8TB Toshiba SAS Drive&lt;/li>
+&lt;li>1x 14TB IronWolf Pro Drive&lt;/li>
+&lt;li>1x Nvidia Quadro M2000&lt;/li>
+&lt;/ul>
+&lt;p>For storage I have a TerraMaster F2-220 running DSM through tinycore with 2x 6TB Ironwolf HDDs.&lt;/p></description></item></channel></rss>
