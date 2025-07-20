@@ -1,0 +1,15 @@
+---
+title: "Enviá notificaciones push a tu móvil con ntfy.sh mediante PowerShell"
+date: 2025-07-08
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - PowerShell
+  - ntfy.sh
+  - PowerShell 5.0
+  - PowerShell 7.1
+  - Windows
+  - Windows Server 2016
+image: images/powershell_ntfy.webp
+description: "Enviá notificaciones push a tu móvil con ntfy.sh mediante PowerShell."
+---
