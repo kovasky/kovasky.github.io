@@ -123,7 +123,8 @@
 }
 
 #single .page-content code {
-  color: var(--primary-color) !important;
+  color: #9ca3af !important;
+  background-color: rgba(176, 179, 184, 0.1) !important;
 }
 
 /* kbd and mark */
