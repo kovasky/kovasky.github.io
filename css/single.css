@@ -193,8 +193,8 @@
 }
 
 #single .sticky-sidebar ::-webkit-scrollbar {
-    height: 0px;
-    width: 0px;
+    height: 1em;
+    width: 1em;
 }
 
 /* Tags */
@@ -347,3 +347,10 @@
 }
 
 /* Singlepage scroll progress end */
+
+.icon svg {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+  vertical-align: -0.125em;
+}

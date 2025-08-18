@@ -136,3 +136,10 @@ document.addEventListener("click", function (e) {
 window.addEventListener("resize", function (e) {
   alignSearchContent();
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInputs = document.querySelectorAll('input#search');
+    searchInputs.forEach(input => {
+        input.addEventListener('input', searchOnChange);
+    });
+});
