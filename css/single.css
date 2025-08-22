@@ -193,8 +193,8 @@
 }
 
 #single .sticky-sidebar ::-webkit-scrollbar {
-    height: 0px;
-    width: 0px;
+    height: 1em;
+    width: 1em;
 }
 
 /* Tags */
