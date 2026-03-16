@@ -226,7 +226,6 @@
     opacity: 0.8;
 }
 
-
 /*TOC*/
 #single aside.toc {
     padding: .7rem 1rem;
@@ -240,26 +239,37 @@
     color: var(--text-color);
 }
 
-#single aside.toc .toc-content ol, #single aside.toc .toc-content ul {
-    margin-bottom: 1em;
+/* Base list styling — no bottom margin */
+#single aside.toc .toc-content ol,
+#single aside.toc .toc-content ul {
+    margin-bottom: 0;
     padding-left: .5em;
     list-style: none;
     opacity: 0.9;
 }
 
-#single aside.toc .toc-content ol li a, #single aside.toc .toc-content ul li a {
+/* Only the top-level list keeps the original bottom margin */
+#single aside.toc .toc-content > ol,
+#single aside.toc .toc-content > ul {
+    margin-bottom: 1em;
+}
+
+#single aside.toc .toc-content ol li a,
+#single aside.toc .toc-content ul li a {
     font-size: 16px;
     text-decoration: none;
     color: var(--text-color);
     opacity: 0.9;
 }
 
-#single aside.toc .toc-content ol li a:hover, #single aside.toc .toc-content ul li a:hover {
+#single aside.toc .toc-content ol li a:hover,
+#single aside.toc .toc-content ul li a:hover {
     color: var(--primary-color);
-    opacity: 1.2;
+    opacity: 1;
 }
 
-#single aside.toc .toc-content ol li li, #single aside.toc .toc-content ul li li {
+#single aside.toc .toc-content ol li li,
+#single aside.toc .toc-content ul li li {
     padding-left: .7em;
 }
 
