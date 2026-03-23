@@ -1,0 +1,35 @@
+/* static/css/fonts.css */
+
+/* Alata (likely regular 400) */
+@font-face {
+  font-family: "Alata";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/alata/PbytFmztEwbIoce9zqY.woff2") format("woff2");
+}
+
+/* Lora (you have 3 files; map them to normal/italic/weights as needed) */
+@font-face {
+  font-family: "Lora";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/lora/0QIvMX1D_JOuMwr7Iw.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Lora";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/lora/0QIvMX1D_JOuM2T7I-NP.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Lora";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/lora/0QIhMX1D_JOuMw_LIftL.woff2") format("woff2");
+}
