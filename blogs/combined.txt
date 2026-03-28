@@ -1,0 +1,4054 @@
+# File: ./homecreation/index.md
+
+---
+title: "Automatically create local home directory when logging in with FreeIPA"
+date: 2023-06-07
+explicitLastMod: 2024-05-17
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - FreeIPA
+image: images/freeipa_home.webp
+description: "Auto create a local home directory in FreeIPA enrolled hosts."
+---
+
+## Intro
+
+While setting up my hosts with FreeIPA, I noticed that home directories were not being created when logging in through ssh. Looking online it seems that most people just use NFS shares to keep home directories the same across devices but I did not want to set up NFS home shares. Fixing this in RHEL-based distros is easy with authconfig but debian-based distros do not come with this. To fix this in debian-based distros is as easy as modiyfing the pam.d config file.
+
+## Modify sshd and reload pam
+
+Open /etc/pam.d/sshd with your favourite text editor and add the following line:
+
+{{< highlight bash >}}
+
+session required pam_mkhomedir.so skel=/etc/skel/ umask=0022
+
+{{< /highlight >}}
+
+After this, no reload should be necessary but just in case we execute the following command:
+
+{{< highlight bash >}}
+
+sudo pam-auth-update --force --package
+
+{{< /highlight >}}
+
+## Done!
+
+After following these steps, our host should automatically create a home directory when logging in through ssh using FreeIPA credentials.
+
+# File: ./mapping_sudo/index.md
+
+---
+title: "Map an Active Directory group to sudo in Linux"
+date: 2024-02-21
+explicitLastMod: 2024-05-17
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - FreeIPA
+  - Active Directory
+  - Linux
+  - Windows
+image: images/mapping_sudo.webp
+description: "Map Active Directory groups in FreeIPA to control access to resources within Linux environments based on AD group memberships."
+---
+
+## Intro
+
+After creating my domain trust between AD and FreeIPA, I was left wanting to access restricted resources in Linux using my AD accounts. To circumvent this, I mapped a group from AD to FreeIPA and gave it the appropriate permissions. 
+
+## Create the group in AD
+
+The first step would be to create a group in AD to which sudo will be mapped. In my case, I created a group named 'sudo' to match the Linux counterpart. To do this, navigate to Server Manager -> Active Directory Users and Computers -> Users. Then, right-click and go to New -> Group. In the name, type 'sudo'. After the item is created, it should look like:
+
+{{< lazyimg img="images/sudo_group.webp" maxSize="640x" alt="sudo group in AD" renderer="lqip-webp" >}}
+
+## Create policies
+
+Navigate to Policy -> Sudo -> Sudo Rules. Here, you can create a new rule or directly use the 'All' rule. In my case, I created a rule titled 'sudorule'. 
+
+{{< lazyimg img="images/ad_sudo_rule.webp" maxSize="640x" alt="sudorule in FreeIPA" renderer="lqip-webp" >}}
+
+To allow commands, navigate to 'Run Commands' and click 'Any Command'. This will essentially make users root (very dangerous). It should look something like:
+
+{{< lazyimg img="images/allow_any_command.webp" maxSize="640x" alt="allow any command" renderer="lqip-webp" >}}
+
+## Add the external group to the sudo rule
+
+Connect to your FreeIPA server as an admin. Then issue the command
+
+{{< highlight bash >}}
+
+ipa sudorule-add-user sudorule --groups 'sudo@win.mydomain.com'
+
+{{< /highlight >}}
+
+This will map the external AD group to the sudo rule you just created. Navigate to the FreeIPA web interface under Policy -> Sudo -> Sudo Rules -> sudorule and It should look like:
+
+{{< lazyimg img="images/external_group_sudorule.webp" maxSize="640x" alt="external group in sudorule" renderer="lqip-webp" >}}
+
+## Done!
+
+Once everything is set-up, members of this group should be limited/allowed to elements and commands as defined by the policies set in place. 
+# File: ./chronyd/index.md
+
+---
+title: "NTP server with GPS and chrony"
+date: 2023-04-07
+explicitLastMod: 2024-05-17
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - ntp
+  - chrony
+  - gps
+image: images/chrony.webp
+description: "Set up an NTP server to keep hosts synchronized."
+---
+
+## Intro
+
+I wanted to easily synchronize the time between my VMs and decided to set up an ntp server to accomplish this. Since a USB GPS device is relatively inexpensive, I thought it would be a great addition to the project.
+
+For the following examples, I used aptitude and vim.
+
+## Prerequisite Packages
+
+Run the following command to ensure we have the necessary packages:
+
+{{< highlight bash >}}
+
+sudo apt-get update && sudo apt-get install gpsd gpsd-clients chrony
+
+{{< /highlight >}}
+
+## Check /dev for GPS
+
+Once the gps is connected to the pc, we need to figure out the assigned device. This can be any of /dev/ttyUSB0, /dev/ttyACM0 or /dev/ttyAMA0. 
+
+If unsure of which device it is, we can always run:
+
+{{< highlight bash >}}
+
+cat /dev/$device
+
+{{< /highlight >}}
+
+We should be able to see a stream with coordinates and strings like "GPGGA" and "GPGSA".
+
+## Modify gpsd.conf and start the service
+
+After getting the correct device, we will need to modify the configuration file located at "/etc/default/gpsd". It should contain the following:
+
+{{< highlight bash >}}
+
+START_DAEMON="true"
+USBAUTO="true"
+DEVICES="/dev/ttyACM0"
+GPSD_OPTIONS="-n"
+
+{{< /highlight >}}
+
+After this we should enable and start the service:
+
+{{< highlight bash >}}
+
+sudo systemctl enable gpsd && sudo systemctl start gpsd
+
+{{< /highlight >}}
+
+## Modify chrony.conf and start the service
+
+The configuration file will either be in "/etc/chrony.conf" or "/etc/chrony/chrony.conf"
+
+{{< highlight bash >}}
+
+driftfile /var/lib/chrony/chrony/drift
+
+allow
+
+refclock SHM 0 refid GPS precision 1e-1 offset 0.9999 delay 0.2
+refclock SHM 1 refid PPS precision 1e-7
+
+{{< /highlight >}}
+
+After this we should enable and start the service:
+
+{{< highlight bash >}}
+
+sudo systemctl enable chronyd && sudo systemctl start chronyd
+
+{{< /highlight >}}
+
+## Checking chrony status
+
+Theres a few things we can check to see if everything was set up correctly. To see if chrony takes in the gps data, we can run the following:
+
+{{< highlight bash >}}
+
+chronyc sources
+
+{{< /highlight >}}
+
+And to see if it is working as intended, we can run:
+
+{{< highlight bash >}}
+
+chronyc tracking
+
+{{< /highlight >}}
+
+The output should look similar to the image at the top of this post. 
+
+## Done!
+
+After following these steps, we should have a working ntp server and all that is left is to point any client to the ip of the host running chrony.
+
+# File: ./no_domain_login/index.md
+
+---
+title: "Log in to Linux using AD credentials without specifying the domain"
+date: 2024-02-16
+explicitLastMod: 2024-05-17
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - FreeIPA
+  - Active Directory
+  - Linux
+  - Windows
+image: images/no_domain_login.webp
+description: "Access an Active Directory (AD) trusted Linux host without specifying the domain."
+---
+
+## Intro
+
+After creating a trust in FreeIPA, I kept having to write the full domain alongside my username whenever I tried to access the system. These are the steps I took to log in only with my username.
+
+## Editing SSSD.conf
+
+Navigate to /etc/sssd/ and open sssd.conf in an elevated text editor. It should look something like
+
+{{< highlight bash >}}
+[domain/lin.mydomain.com]
+...
+[sssd]
+services = nss, pam, ssh, sudo
+domains = lin.mydomain.com
+{{< /highlight >}}
+
+Before [sssd], add your trusted domain. Something like:
+
+{{< highlight bash >}}
+[domain/lin.mydomain.com]
+...
+use_fully_qualified_names = false
+
+[domain/lin.mydomain.com/win.mydomain.com]
+use_fully_qualified_names = false
+
+[sssd]
+...
+{{< /highlight >}}
+
+### Restart SSSD service
+
+After the modification has taken place, just restart the service with the following command:
+
+{{< highlight bash >}}
+sudo systemctl restart sssd
+{{< /highlight >}}
+
+You're done! Next time you log in, you will only have to specify your username.
+
+# File: ./fan_control/index.md
+
+---
+title: "iDRAC 9 manual fan control on Dell PowerEdge servers"
+date: 2024-04-15
+explicitLastMod: 2024-11-16
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - Dell
+  - iDRAC
+  - Poweredge
+  - Linux
+  - Proxmox
+  - Bash
+image: images/idrac.webp
+description: "iDRAC 9 manual fan control on Dell PowerEdge servers"
+---
+
+## Intro
+
+I recently acquired a Dell Poweredge T440, and after installing a GPU the fans skyrocketed. This turned the server into a noise machine. To solve this, I created a script that disables third-party PCI mode and based on a threshold, set the fan speed to 20% or to be controlled by Dell's fan profile. These are the steps I took to make my T440 silent again.
+
+## Downgrading iDRAC 9 firmware to 3.30.30.30
+
+For this whole setup to work, iDRAC needs to be on firmware 3.30.30.30, as later firmware revisions remove the ability to control the fan speed. The firmware can be downloaded from [Dell's website](https://www.dell.com/support/home/en-us). To downgrade, navigate to your iDRAC's web admin page, and under Maintenance->System Update you can apply the downgrade. After the downgrade, make sure IPMI over LAN is enabled under iDRAC Settings->Connectivity->Network->IPMI Settings.
+
+## Script to control the fan speed
+
+Once iDRAC is on firmware 3.30.30.30 and you can use IPMI over LAN, you can start using my script to control the fan speed. My script first checks that a VM has been up for 60 seconds. I added this check as pfSense is virtualized in my lab and as such needs to wait for it to be up to issue LAN commands. You can remove this check and the script will work as intended. Before running, make sure to fill in the blanks.
+
+{{< highlight bash >}}
+#!/bin/bash
+
+check_start_time() {
+    local start_time="$1"
+    local current_time=$(date +%s)
+
+    local time_diff=$((current_time - start_time))
+
+    if [ $time_diff -ge 60 ]; then
+        echo 0
+    else
+        echo 1
+    fi
+}
+
+check_temperature() {
+    temp_lines=$(ipmitool -I lanplus -H "$HOST" -U "$USER" -P "$PASS" sdr type temperature 2>/dev/null | grep -e degrees | awk '{print $(NF-2)}')
+    temp_arr=""
+    readarray -t temp_arr <<< "$temp_lines"
+    sorted_temps=($(printf "%s\n" "${temp_arr[@]}" | sort -nr))
+    max_temp=${sorted_temps[0]}
+
+    if [ "$max_temp" -le 60 ] && [ "$CURRENT_PROFILE" != "MANUAL" ]; then
+        # enable manual fan control
+        ipmitool -I lanplus -H "$HOST" -U "$USER" -P "$PASS" raw 0x30 0x30 0x01 0x00 &> /dev/null
+        # set initial fan to 20%
+        ipmitool -I lanplus -H "$HOST" -U "$USER" -P "$PASS" raw 0x30 0x30 0x02 0xff 0x14 &> /dev/null
+        LOW_TO_HIGH=false
+        CURRENT_PROFILE="MANUAL"
+    elif [ "$max_temp" -le 65 ] && [ "$CURRENT_PROFILE" != "MANUAL2" ]; then
+        # enable manual fan control
+        ipmitool -I lanplus -H "$HOST" -U "$USER" -P "$PASS" raw 0x30 0x30 0x01 0x00 &> /dev/null
+        # set initial fan to 30%
+        ipmitool -I lanplus -H "$HOST" -U "$USER" -P "$PASS" raw 0x30 0x30 0x02 0xff 0x1e &> /dev/null
+        # set low_to_high used to determine wait time
+        if [[ "$CURRENT_PROFILE" == "MANUAL"]]; then 
+            LOW_TO_HIGH=true 
+        else
+            LOW_TO_HIGH=false
+        fi 
+        CURRENT_PROFILE="MANUAL2"
+    elif [ "$max_temp" -gt 65 ] && [ "$CURRENT_PROFILE" != "AUTO" ]; then
+        # enable Dell fan control
+        ipmitool -I lanplus -H "$HOST" -U "$USER" -P "$PASS" raw 0x30 0x30 0x01 0x01 &> /dev/null
+        # set low_to_high used to determine wait time
+        if [[ "$CURRENT_PROFILE" == "MANUAL2"]]; then 
+            LOW_TO_HIGH=true 
+        else
+            LOW_TO_HIGH=false
+        fi 
+        CURRENT_PROFILE="AUTO"
+    fi
+}
+
+disable_third_party_mode (){
+    # disable 3rd party pcie fan mode
+    output=$(sshpass -p "$PASS" ssh -o StrictHostKeyChecking=no "$USER@$HOST" "racadm get system.pcieslotlfm" 2>/dev/null)
+    pcie_ports_count=$(echo "$output" | grep -c 'System.pcieslotlfm')
+
+    # Iterate through each PCIe port and disable third party mode
+    for ((i=1; i<=pcie_ports_count; i++)); do
+        sshpass -p "$PASS" ssh -o StrictHostKeyChecking=no "$USER@$HOST" "racadm set system.pcieslotlfm.$i.lfmmode disabled" &> /dev/null
+    done
+}
+
+HOST=""
+USER=""
+PASS=""
+VMID=""
+CURRENT_PROFILE=""
+LOW_TO_HIGH=false
+
+start_time=$(ps -o lstart= -p $(cat /var/run/qemu-server/$VMID.pid))
+start_time=$(date -d "$start_time" +%s)
+
+while [[ $(check_start_time "$start_time") -eq 1 ]]
+do
+    sleep 5
+done
+
+disable_third_party_mode
+
+while true; do
+    check_temperature
+
+    if [[ "$CURRENT_PROFILE" == "AUTO" || "$LOW_TO_HIGH" == true]]; then 
+        sleep 180 
+    else 
+        sleep 60 
+    fi
+done
+
+{{< /highlight >}}
+
+
+## Automating the launching of the script
+
+Instead of manually running this every time my server reboots, I created a service. To do so, I used the following service file:
+
+{{< highlight bash >}}
+[Unit]
+Description=User defined temperature fan control for iDrac 9
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/fan_control.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+{{< /highlight >}}
+
+On my Proxmox install, the bash script is placed at /usr/local/sbin/fan_control.sh with the appropriate permissions and the service file is at /etc/systemd/system. After these files are created, it takes a "systemctl daemon-reload" and then a "systemctl enable fan_control" to start the service and make sure it starts every reboot.
+
+## Done!
+
+Once everything is set up, your Dell server with iDRAC 9 should be extremely quiet. 
+
+# File: ./haproxy_multi_domain/index.md
+
+---
+title: "Set up multiple domains on one public IP using HAProxy on pfSense"
+date: 2024-11-16
+explicitLastMod: 2025-02-03
+draft: false
+author: "Kovasky Buezo"
+tags:
+ - pfSense
+ - HAProxy
+image: images/frontend_page.webp
+description: "Set up different domains on one public IP using HAProxy on pfSense."
+---
+
+## Intro
+
+I recently acquired a second domain for one of my projects and wanted to set this up behind the HAProxy instance in my firewall. The problem was that I was already serving my primary domain with it, so I was looking to serve my secondary one as well. It was not as straightforward as I thought but after a bit of Googling and some trial and error, I could proxy multiple domains sharing the same public IP. Here's how I did it!
+
+## Create a shared frontend
+
+In the HAProxy Frontend settings, create a new front end with the name shared_frontend; status Active; external address to WAN address, port to 443, and tick SSL Offloading. The type should be http / https (offloading). It should look as follows:
+
+{{< lazyimg img="images/shared_frontend.webp" maxSize="640x" alt="Shared Frontend creation page" renderer="lqip-webp" >}}
+
+Scroll down to the SSL Offloading section and select your default certificate. Include SNI filters like "*.mydomain.com !mydomain2.com" to apply the correct certificate for each domain. In the Additional certificates setting, add your secondary domain certificate. Make sure that the Add ACL option is checked for both of them. It should look like:
+
+{{< lazyimg img="images/ssl_offloading.webp" maxSize="640x" alt="Applying a SNI filter to the shared frontend" renderer="lqip-webp" >}}
+
+All other settings can be left as defaults.
+
+## Create your secondary frontends
+
+Create two frontends for each domain and attach the corresponding ACLs and Actions. Click Shared Frontend and set the Primary frontend to the shared_frontend created in the previous step. This looks like:
+
+{{< lazyimg img="images/secondary_frontend.webp" maxSize="640x" alt="Creating a secondary frontend" renderer="lqip-webp" >}}
+
+Note that you will not set your certificate here, as that will be handled by the shared_frontend.
+
+## All done!
+
+After applying all settings and restarting HAProxy, both domains should be handled under the same public IP. Your Frontend page will look like like the cover image in this post. Happy homelabbing!
+# File: ./rtx_5000_passthrough/index.md
+
+---
+title: "How to passthrough an RTX 5000 series GPU to Proxmox"
+date: 2025-07-20
+explicitLastMod: 2025-08-18
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - Proxmox
+  - Linux
+  - Ubuntu
+  - GPU
+image: images/5060.webp
+description: "RTX 5060 in a Dell T440."
+---
+
+## Intro
+
+I recently acquired an RTX 5060 GPU and had to look at multiple sources in order to get passthrough working. This will outline all the steps I took in order to get it working on my Dell Poweredge T440 server.
+
+## Update
+
+At the time of the post edit, Proxmox 9 has been released. I have updated my host to the new version and used 
+the <a href="https://nvidia.custhelp.com/app/answers/detail/a_id/5665/~/nvidia-gpu-uefi-firmware-update-tool-for-rtx-5060-series" target="_blank">update tool for RTX 5060 series&#128279;</a> provided by Nvidia. This runs only on Windows so I have passed-through my GPU to a windows VM in order to run the update.
+
+I am still not able to enable the ROM BAR or primary GPU options in the VM.  
+
+## Pre-requisite
+
+I am using an ubuntu 22.04 VM with the official 6.14 kernel update. It is worth noting that I could not get this to work with the latest generic kernel installed through Ubuntu Mainline Kernel Installer. The kernel needs to be provided by canonical.
+
+Make sure you have enabled ```Above 4G Decoding``` in your BIOS, and if available, also enable ReBAR support.
+
+## 1. Proxmox Grub Configuration
+
+In your proxmox server, open the grub configuration file ```/etc/default/grub``` and look for the line ```GRUB_CMDLINE_LINUX_DEFAULT``` and modify it to look like this:
+
+{{< highlight bash >}}
+GRUB_CMDLINE_LINUX_DEFAULT="quiet intel_iommu=on iommu=pt pcie_acs_override=downstream,multifunction nofb nomodeset video=vesafb:off,efifb:off"
+{{< /highlight >}}
+
+If you are using an amd cpu, change ```intel_iommu=on``` in favour of ```amd_iommu=on```. 
+
+Save and close it, and issue the command ```update-grub```. To ensure IOMMU has been enabled successfully, reboot your server and issue the command ```dmesg | grep -e DMAR -e IOMMU```, you should see a line akin to:
+
+{{< highlight bash >}}
+[    0.537225] DMAR: IOMMU enabled
+{{< /highlight >}}
+
+## 2. Proxmox VFIO Kernel Modules
+
+Edit ```/etc/modules``` and add the following lines to the end of the file:
+
+{{< highlight bash >}}
+vfio
+vfio_iommu_type1
+vfio_pci
+vfio_virqfd
+{{< /highlight >}}
+
+## 3. Configure Proxmox VFIO Options
+
+Issue the following commands:
+
+{{< highlight bash >}}
+echo "options vfio_iommu_type1 allow_unsafe_interrupts=1" > /etc/modprobe.d/iommu_unsafe_interrupts.conf
+echo "options kvm ignore_msrs=1" > /etc/modprobe.d/kvm.conf
+{{< /highlight >}}
+
+These options help VFIO handle interrupt mapping and MSR access for GPU passthrough.
+
+## 4. Blacklist NVIDIA drivers
+
+Issue the following commands:
+
+{{< highlight bash >}}
+echo "blacklist nouveau" >> /etc/modprobe.d/blacklist.conf
+echo "blacklist nvidia*" >> /etc/modprobe.d/blacklist.conf
+{{< /highlight >}}
+
+## 5. Bind the GPU to VFIO
+
+Now, we need to tell Proxmox to bind the VFIO driver to our GPU. To do this, first you need to find out the gpu ids. 
+
+Issue the command ```lspci -nn | grep NVIDIA```. You should get an output like:
+
+{{< highlight bash >}}
+root@pve:~# lspci -nn | grep NVIDIA
+af:00.0 VGA compatible controller [0300]: NVIDIA Corporation Device [10de:2d05] (rev a1)
+af:00.1 Audio device [0403]: NVIDIA Corporation Device [10de:22eb] (rev a1)
+{{< /highlight >}}
+
+Note down the PCI IDs, particularly: ```10de:2d05``` and ```10de:22eb```. These hex values identify your specific GPU model and audio controller.
+
+Issue the command ```echo "options vfio-pci ids=10de:2d05,10de:22eb" > /etc/modprobe.d/vfio.conf```, replacing the IDs appropriately. 
+
+Afterwards, run ```update-initramfs -u``` and reboot your server. 
+
+## 6. Attaching the GPU to the VM
+
+First, ensure your VM is off. Then, to attach the GPU to the VM, navigate to the Hardware settings and select Add -> PCI Device. Click on Raw Device and search for the GPU in the dropdown. It should look as follows:
+
+{{< lazyimg img="images/vm_gpu_selection.webp" maxSize="640x" alt="Proxmox PCI Device Hardware Selection" renderer="lqip-webp" >}}
+
+Make sure to Enable All Functions and PCI-Express while keeping ROM-Bar and Primary GPU unchecked.
+
+{{< lazyimg img="images/vm_gpu_options.webp" maxSize="640x" alt="NVIDIA RTX 5000 Hardware Passthrough Options." renderer="lqip-webp" >}}
+
+If you prefer GUI access to your system, make sure Display is set to default.
+
+{{< lazyimg img="images/vm_display_selection.webp" maxSize="640x" alt="NVIDIA RTX 5000 Hardware Passtrough Options." renderer="lqip-webp" >}}
+
+Now, turn on your vm. 
+
+## 7. Install the NVIDIA Drivers
+
+For the card to work correctly, you need to install the latest nvidia-open drivers (575 at the time of writing this). 
+
+First, uninstall any old drivers:
+
+{{< highlight bash >}}
+sudo apt-get remove --purge '^nvidia-.*'
+sudo apt autoremove
+reboot
+{{< /highlight >}}
+
+Then, install some dependencies:
+
+{{< highlight bash >}}
+sudo apt install pkg-config libglvnd-dev dkms build-essential libegl-dev libegl1 libgl-dev libgl1 libgles-dev libgles1 libglvnd-core-dev libglx-dev libopengl-dev gcc make 
+{{< /highlight >}}
+
+Finally, install the drivers and reboot:
+
+{{< highlight bash >}}
+sudo add-apt-repository ppa:graphics-drivers/ppa
+sudo apt update 
+sudo apt install nvidia-driver-575-open
+reboot
+{{< /highlight >}}
+
+To confirm everything works as intended, run ```nvidia-smi```. You should see a screen like:
+
+
+{{< lazyimg img="images/5060_nvidia_smi.webp" maxSize="640x" alt="NVIDIA RTX 5000 Hardware Passtrough Options." renderer="lqip-webp" >}}
+
+Make sure to disable the default display so that the system uses the NVIDIA GPU as its primary GPU. It is worth noting that ROMBar and Primary GPU options under the hardware tab should be disabled, otherwise the system will be prevented from booting up.
+
+## Done!
+
+If all the steps have succeeded, you should have passed through your RTX 5000 series GPU.
+
+## Resources
+
+Thanks to these resources for useful information.
+
+- <a href="https://www.reddit.com/r/homelab/comments/b5xpua/the_ultimate_beginners_guide_to_gpu_passthrough/" target="_blank">u/cjalas' guide to passthrough</a>
+- <a href="https://github.com/oddmario/NVIDIA-Ubuntu-Driver-Guide" target="_blank">oddmario's nvidia ubuntu driver guide</a>
+- <a href="https://forum.proxmox.com/threads/nvidia-5000-series-passthrough-failing-miserably.165456/" target="_blank">Nvidia 5000 series passthrough proxmox thread</a>
+
+# File: ./rtx_5000_passthrough/index.es.md
+
+---
+title: "Cómo hacer passthrough de una GPU RTX serie 5000 a Proxmox"
+date: 2025-07-20
+explicitLastMod: 2025-08-18
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - Proxmox
+  - Linux
+  - Ubuntu
+  - GPU
+image: images/5060.webp
+description: "RTX 5060 en una Dell T440."
+---
+
+## Intro
+
+Recientemente adquirí una RTX 5060 y tuve que consultar múltiples páginas para lograr que el passthrough funcionara. Esta guía detalla los pasos que seguí para hacerlo funcionar en mi servidor.
+
+## Actualización
+
+Al momento de la edición del post, Proxmox 9 ha sido lanzado. He actualizado mi host a la nueva versión y he utilizado la <a href="https://nvidia.custhelp.com/app/answers/detail/a_id/5665/~/nvidia-gpu-uefi-firmware-update-tool-for-rtx-5060-series" target="_blank">herramienta de actualización para la serie RTX 5060&#128279;</a> proporcionada por Nvidia. Esta solo funciona en Windows, por lo que he pasado mi GPU a una máquina virtual Windows para ejecutar la actualización.
+
+Todavía no puedo habilitar las opciones de ROM BAR o GPU primaria en la máquina virtual.
+
+## Prerrequisitos
+
+Estoy usando una máquina virtual con Ubuntu 22.04 y la actualización oficial del kernel 6.14. Es importante mencionar que no pude hacer que esto funcionara con el último kernel genérico instalado a través de Ubuntu Mainline Kernel Installer. El kernel necesita ser proporcionado por Canonical.
+
+Asegurate de tener habilitado ```Above 4G Decoding``` en tu BIOS, y si está disponible, también habilitá el soporte ReBAR.
+
+## 1. Configuración de Grub en Proxmox
+
+En tu servidor Proxmox, abrí el archivo de configuración de grub ```/etc/default/grub``` y buscá la línea ```GRUB_CMDLINE_LINUX_DEFAULT``` y modificála para que se vea así:
+
+{{< highlight bash >}}
+GRUB_CMDLINE_LINUX_DEFAULT="quiet intel_iommu=on iommu=pt pcie_acs_override=downstream,multifunction nofb nomodeset video=vesafb:off,efifb:off"
+{{< /highlight >}}
+
+Si estás usando una CPU AMD, cambiá  ```intel_iommu=on``` por ```amd_iommu=on```. 
+
+Guardalo y cerralo, y ejecutá el comando ```update-grub```. Para asegurarte de que IOMMU se habilitó correctamente, reiniciá tu servidor y ejecutá el comando ```dmesg | grep -e DMAR -e IOMMU```, deberías ver una línea similar a:
+
+{{< highlight bash >}}
+[    0.537225] DMAR: IOMMU enabled
+{{< /highlight >}}
+
+## 2. Módulos VFIO del Kernel de Proxmox
+
+Editá ```/etc/modules``` y agregá las siguientes líneas al final del archivo:
+
+{{< highlight bash >}}
+vfio
+vfio_iommu_type1
+vfio_pci
+vfio_virqfd
+{{< /highlight >}}
+
+## 3. Configurar las Opciones VFIO de Proxmox
+
+Ejecutá los siguientes comandos:
+
+{{< highlight bash >}}
+echo "options vfio_iommu_type1 allow_unsafe_interrupts=1" > /etc/modprobe.d/iommu_unsafe_interrupts.conf
+echo "options kvm ignore_msrs=1" > /etc/modprobe.d/kvm.conf
+{{< /highlight >}}
+
+Estas opciones ayudan a VFIO a manejar el mapeo de interrupciones y el acceso MSR para el passthrough de la gráfica.
+
+## 4. Poner en Lista Negra los Drivers de NVIDIA
+
+Ejecutá los siguientes comandos:
+
+{{< highlight bash >}}
+echo "blacklist nouveau" >> /etc/modprobe.d/blacklist.conf
+echo "blacklist nvidia*" >> /etc/modprobe.d/blacklist.conf
+{{< /highlight >}}
+
+## 5. Vincular la GPU a VFIO
+
+Ahora, necesitamos decirle a Proxmox que vincule el driver VFIO a nuestra GPU. Para hacer esto, primero tenés que encontrar los IDs de la GPU.
+
+Ejecutá el comando ```lspci -nn | grep NVIDIA```. Deberías ver algo como:
+
+{{< highlight bash >}}
+root@pve:~# lspci -nn | grep NVIDIA
+af:00.0 VGA compatible controller [0300]: NVIDIA Corporation Device [10de:2d05] (rev a1)
+af:00.1 Audio device [0403]: NVIDIA Corporation Device [10de:22eb] (rev a1)
+{{< /highlight >}}
+
+Anotá los IDs, particularmente: ```10de:2d05``` y ```10de:22eb```. Estos valores hexadecimales identifican tu modelo específico de GPU y controlador de audio.
+
+Ejecutá el comando ```echo "options vfio-pci ids=10de:2d05,10de:22eb" > /etc/modprobe.d/vfio.conf```, reemplazando los IDs apropiadamente.
+
+Después, ejecutá ```update-initramfs -u``` y reiniciá tu servidor.
+
+## 6. Conectar la GPU a la VM
+
+Primero, asegurate de que tu VM esté apagada. Luego, para conectar la GPU a la VM, navegá a la configuración de Hardware y seleccioná Add -> PCI Device. Hacé clic en Raw Device y buscá la GPU en el desplegable. Debería verse así:
+
+{{< lazyimg img="images/vm_gpu_selection.webp" maxSize="640x" alt="Proxmox PCI Device Hardware Selection" renderer="lqip-webp" >}}
+
+Asegurate de habilitar All Functions y PCI-Express mientras mantenés ROM-Bar y Primary GPU desmarcados.
+
+{{< lazyimg img="images/vm_gpu_options.webp" maxSize="640x" alt="NVIDIA RTX 5000 Hardware Passthrough Options." renderer="lqip-webp" >}}
+
+Si preferís acceso GUI a tu sistema, asegurate de que Display esté configurado en default.
+
+{{< lazyimg img="images/vm_display_selection.webp" maxSize="640x" alt="NVIDIA RTX 5000 Hardware Passtrough Options." renderer="lqip-webp" >}}
+
+Ahora, encendé tu VM.
+
+## 7. Instalar los Drivers de NVIDIA
+
+Para que la tarjeta funcione correctamente, necesitás instalar los últimos drivers nvidia-open (575 al momento de escribir esto).
+
+Primero, desinstalá los drivers viejos:
+
+{{< highlight bash >}}
+sudo apt-get remove --purge '^nvidia-.*'
+sudo apt autoremove
+reboot
+{{< /highlight >}}
+
+Luego, instalá las dependencias:
+
+{{< highlight bash >}}
+sudo apt install pkg-config libglvnd-dev dkms build-essential libegl-dev libegl1 libgl-dev libgl1 libgles-dev libgles1 libglvnd-core-dev libglx-dev libopengl-dev gcc make 
+{{< /highlight >}}
+
+Finalmente, instalá los drivers y reiniciá:
+
+{{< highlight bash >}}
+sudo add-apt-repository ppa:graphics-drivers/ppa
+sudo apt update 
+sudo apt install nvidia-driver-575-open
+reboot
+{{< /highlight >}}
+
+Para confirmar que todo funciona, ejecutá nvidia-smi. Deberías ver algo como:
+
+{{< lazyimg img="images/5060_nvidia_smi.webp" maxSize="640x" alt="NVIDIA RTX 5000 Hardware Passtrough Options." renderer="lqip-webp" >}}
+
+Asegurate de deshabilitar el display por defecto para que el sistema use la GPU NVIDIA como su GPU primaria. Es importante mencionar que las opciones ROMBar y Primary GPU en la pestaña de hardware deben estar deshabilitadas, de lo contrario el sistema no podrá encender.
+
+## Listo!
+
+Si todos los pasos fueron exitosos, deberías haber hecho passthrough de tu GPU RTX serie 5000.
+
+## Recursos
+
+He utilizado estos recursos para crear esta guía.
+
+- <a href="https://www.reddit.com/r/homelab/comments/b5xpua/the_ultimate_beginners_guide_to_gpu_passthrough/" target="_blank">Guía de passthrough de u/cjalas</a>
+- <a href="https://github.com/oddmario/NVIDIA-Ubuntu-Driver-Guide" target="_blank">Guía de drivers nvidia ubuntu de oddmario</a>
+- <a href="https://forum.proxmox.com/threads/nvidia-5000-series-passthrough-failing-miserably.165456/" target="_blank">Hilo de passthrough de serie Nvidia 5000 en Proxmox</a>
+
+# File: ./meshcentral_xorg/index.md
+
+---
+title: "How to configure a MeshCentral client to replace Xwayland with Xorg "
+date: 2024-07-13
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - MeshCentral
+  - Linux
+  - Xorg
+  - Xwayland
+image: images/error.webp
+description: "How to Fix 'This platform is configured to use Xwayland please modify config to use Xorg' in MeshCentral clients."
+---
+
+## Intro
+
+After deploying the MeshCentral agents to my VMs, I noticed that some of them produced an error screen complaining about Xwayland. This was as simple as modifying a config file and restarting a service.
+
+## Modifying custom.conf
+
+Depending on your system, you will have to navigate to /etc/gdm or /etc/gdm3. Inside this folder you will find a file named custom.conf. It will look something like:
+
+{{< highlight bash >}}
+# GDM configuration storage
+
+[daemon]
+# Uncomment the line below to force the login screen to use Xorg
+#WaylandEnable=false
+
+[security]
+
+[xdmcp]
+
+[chooser]
+
+[debug]
+# Uncomment the line below to turn on debugging
+#Enable=true
+{{< /highlight >}}
+
+All you have to do, is uncomment the line WaylandEnable=false. After doing so, it should look like:
+
+{{< highlight bash >}}
+# GDM configuration storage
+
+[daemon]
+# Uncomment the line below to force the login screen to use Xorg
+WaylandEnable=false
+
+[security]
+
+[xdmcp]
+
+[chooser]
+
+[debug]
+# Uncomment the line below to turn on debugging
+#Enable=true
+{{< /highlight >}}
+
+## Restarting the gdm service
+
+Once the modification is in place, you just have to issue the command:
+
+{{< highlight bash >}}
+
+service gdm restart
+
+{{< /highlight >}}
+
+## Done!
+
+After restarting gdm, you will be able to access the VM's desktop using MeshCentral.
+
+# File: ./ad_trust/index.md
+
+---
+title: "Setting up a cross-domain trust between FreeIPA and AD"
+date: 2024-02-16
+explicitLastMod: 2024-05-17
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - FreeIPA
+  - Active Directory
+  - cross-domain trust
+  - Linux
+  - Windows
+image: images/ad_trust.webp
+description: "Set up a cross-domain trust between FreeIPA and Active Directory to enable Windows authentication on Linux hosts."
+---
+
+## Intro
+
+I've been playing around with FreeIPA in my homelab for a while and have always wanted to enable seamless authentication between all my hosts regardless of their operating system. I stumbled upon the concept of cross-domain trusts between FreeIPA and Active Directory which allows us to achieve this. 
+
+There is a caveat though, and that is that two-way trusts are still not fully implemented in FreeIPA, which means Windows users can authenticate against Linux hosts but Linux users can't do the same the other way around.
+
+## Creating the trust (on your FreeIPA server)
+
+First, make sure that your FreeIPA server and your Active Directory do not share the same domain. You can have each of them be on a subdomain of the other or even create custom domains altogether. In my case, I went with lin.mydomain.com for FreeIPA and win.mydomain.com for Active Directory. Once the servers are set up with their respective domains, you can begin setting up the trust. 
+
+You should have the following ports open:
+TCP ports: 53, 80, 88, 135, 138, 139, 389, 443, 445, 464, 636, 1024-1300
+UDP ports: 53, 88, 123, 138, 139, 389, 445, 464, 
+
+Make sure to install the ad trust package for FreeIPA: 
+
+{{< highlight bash >}}
+
+yum install \*ipa-server-trust-ad
+
+{{< /highlight >}}
+
+Then proceed to run the command:
+
+{{< highlight bash >}}
+
+kinit <user with ipa admin privileges>
+
+ipa-adtrust-install
+
+{{< /highlight >}}
+
+Follow the on-screen instructions to input your ad domain, domain admin, and password.
+
+## Validating the Trust (on your AD server)
+
+On server manager, navigate to tools->Active Directory Domains and Trusts. Right-click on your domain, and select properties. Click on Trusts, select the incoming trust for your FreeIPA domain, and click validate. Input your domain admin credentials.
+
+## Validating the Trust (on your FreeIPA server)
+
+Try to log in using *kinit user@win.mydomain.local*. If everything is right, this should succeed. 
+# File: ./get_outline/index.md
+
+---
+title: "Set up Outline Wiki with local object storage and OIDC integration"
+date: 2024-05-07
+explicitLastMod: 2024-05-17
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - Outline Wiki
+  - Docker
+  - Linux
+  - OIDC
+  - Authelia
+  - S3
+  - Notion
+image: images/outline_wiki.webp
+description: "Set up Outline Wiki with local object storage and OIDC integration."
+---
+
+## Intro
+
+I started using Notion's free tier as a knowledge bank for a side project. It's measley 1000 blocks were capped quickly and searching for an alternative lead to Outline. Outline is 100% free, selfhostable, and has a very similar featureset. 
+
+Most of the guides out there configure Outline with an S3 store for object storage, but I do not really have a need for it. Also, I wanted to integrate Outline with Authelia for integration with my Active Directory server as well as Fail2Ban. 
+
+## Docker Compose
+
+After some trial and error, this was the resuting compose file that spins up Outline with OIDC and local object storage. 
+
+{{< highlight yaml >}}
+
+version: "3.1"
+services:
+  redis:
+    image: redis
+    restart: unless-stopped
+    container_name: redis
+    networks:
+      - internal
+
+  postgres:
+    image: postgres:latest
+    restart: unless-stopped
+    container_name: postgres
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=outline
+      - POSTGRES_DB=outline
+    networks:
+      - internal
+    volumes:
+      - db:/var/lib/postgresql/data
+
+  outline:
+    image: outlinewiki/outline
+    user: root
+    restart: unless-stopped
+    container_name: outline
+    command: sh -c "yarn start --env=production-ssl-disabled"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - PGSSLMODE=disable
+      - SECRET_KEY=${SECRET_KEY}
+      - UTILS_SECRET=${UTILS_SECRET}
+      - DATABASE_URL=postgres://outline:${POSTGRES_PASSWORD}@postgres:5432/outline
+      - REDIS_URL=redis://redis:6379
+      - URL=${WIKI_URL}
+      - PORT=3000
+      - FORCE_HTTPS=false
+      - OIDC_CLIENT_ID=outline
+      - OIDC_CLIENT_SECRET=${OIDC_SECRET}
+      - OIDC_AUTH_URI=${AUTH_URI}
+      - OIDC_TOKEN_URI=${AUTH_TOKEN}
+      - OIDC_USERINFO_URI=${AUTH_USERINFO}
+      - OIDC_USERNAME_CLAIM=preferred_username
+      - OIDC_DISPLAY_NAME=Authelia
+      - OIDC_SCOPES=openid email groups profile
+      - FILE_STORAGE=local
+      - FILE_STORAGE_UPLOAD_MAX_SIZE=26214400
+      - FILE_STORAGE_IMPORT_MAX_SIZE=
+      - FILE_STORAGE_WORKSPACE_IMPORT_MAX_SIZE=
+      - SMTP_HOST=$SMTP_HOST
+      - SMTP_PORT=$SMTP_PORT
+      - SMTP_USERNAME=$SMTP_USER
+      - SMTP_PASSWORD=$SMTP_PASSWORD
+      - SMTP_FROM_EMAIL=$SMTP_FROM
+      - SMTP_TLS_CIPHERS=TLSv1.2
+      - SMTP_SECURE=false
+    volumes:
+      - data:/var/lib/outline/data
+    ports:
+      - 10300:3000
+    networks:
+      - internal
+
+networks:
+  internal:
+
+volumes:
+  db:
+    driver: local
+  data:
+    driver: local
+
+{{< /highlight >}}
+
+Here is how you populate the variables:
+- ${SECRET_KEY}, can be any random string (the longer the better)
+
+- ${UTILS_SECRET}, can be any random string (the longer the better)
+
+- ${POSTGRES_PASSWORD}, can be any random string (the longer the better)
+
+- ${WIKI_URL}, where outline will be accessed (like a reverse proxy address)
+
+- ${OIDC_SECRET}, a random jwt token
+
+- ${OIDC_AUTH_URI}=${AUTH_URI}, https://<authelia_domain>/api/oidc/authorization
+
+- ${OIDC_TOKEN_URI}=${AUTH_TOKEN}, https://<authelia_domain>/api/oidc/token
+
+- ${OIDC_USERINFO_URI}=https://<authelia_domain>/api/oidc/userinfo
+
+
+## Authelia configuration
+
+This is how the configuration.yml for Authelia should look like:
+
+{{< highlight yaml >}}
+
+identity_providers:
+  oidc:
+    issuer_private_key: |
+      <private_key>
+    clients:
+    - id: outline
+      description: Outline Wiki
+      secret: '$plaintext$<OIDC_SECRET>'
+      public: false
+      authorization_policy: two_factor
+      redirect_uris:
+        - https://<WIKI_URL>/auth/oidc.callback
+      scopes:
+        - openid
+        - profile
+        - email
+        - groups
+      response_types:
+        - code
+      grant_types:
+        - refresh_token
+        - authorization_code
+      response_modes:
+        - form_post
+        - query
+        - fragment
+      userinfo_signing_algorithm: none
+      token_endpoint_auth_method: client_secret_post
+      consent_mode: implicit
+
+{{< /highlight >}}
+
+Here is how you populate the variables:
+- ${WIKI_URL}, where outline will be accessed (like a reverse proxy address)
+
+- ${OIDC_SECRET}, jwt token used in the docker compose file
+
+- private_key, please visit the authelia guide located [here](https://www.authelia.com/reference/guides/generating-secure-values/#generating-an-rsa-keypair)
+
+## Done!
+
+Once set up with these config settings, outline should be up and running. You can take a look at this compose file, as well as others [here](https://git.agrajag.cloud/kova/homelabscripts).
+# File: ./pfsense_haproxy_watchdog_cron/index.md
+
+---
+title: "Restart HAProxy on pfSense automatically using cron (watchdog script)"
+date: 2026-02-26
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - cron
+  - HAProxy
+  - pfSense
+image: images/pfsense_haproxy_watchdog.webp
+description: "A pfSense HAProxy watchdog script using cron to automatically restart HAProxy if the service stops."
+---
+
+## Intro
+
+Every few weeks I wake up to none of my hosted services working, despite my server being on and no crashes reported. I found out that HAProxy is the culprit as it seemed to randomly stop running. I checked my configuration and the logs, but nothing seems out of the ordinary.
+
+While I find a proper solution, I created a cron task that acts as a watchdog and restarts HAProxy if the service is stopped.
+
+My setup is:
+- pfSense 2.7.2
+- HAProxy-devel 0.63_2
+
+## HAProxy watchdog script
+
+Create the file `/usr/local/sbin/haproxy-watchdog.sh` and paste the following contents in there.
+
+{{< highlight bash >}}
+#!/bin/sh
+
+service haproxy onestatus >/dev/null 2>&1
+status=$?
+
+# If the exit code is not 0, it means HAProxy is not running
+if [ "$status" -ne 0 ]; then
+    service haproxy onestart >/dev/null 2>&1
+fi
+{{< /highlight >}}
+
+Afterwards give it the appropriate permissions by issuing the command `chmod +x /usr/local/sbin/haproxy-watchdog.sh`.
+
+## Adding the script to the cron service
+
+Ensure the cron package is installed. Navigate to **Services->Cron** and click on **Add**. Set the settings as shown in the cover picture at the top of this page.
+
+To test if this is working, stop HAProxy, wait a minute or two, and verify that HAProxy has been restarted.
+
+## Done!
+
+Next time HAProxy crashes, this will ensure it gets restarted without manual interference.
+
+# File: ./pfsense_haproxy_watchdog_cron/index.es.md
+
+---
+title: "Connect Fail2Ban with pfSense"
+date: 2025-08-03
+draft: true
+author: "Kovasky Buezo"
+tags:
+  - Apache
+  - Fail2Ban
+  - Linux
+  - pfSense
+image: images/pfsense_alias.webp
+description: "pfSense Fail2Ban url alias."
+---
+# File: ./ollama_vulkan_intel/index.md
+
+---
+title: "Build and run ollama with vulkan support to enable local inference on Intel Arc GPUs"
+date: 2025-02-21
+explicitLastMod: 2025-02-28
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - ollama
+  - vulkan
+  - intel arc
+  - ai
+image: images/ollama_service.webp
+description: "Build and run ollama with vulkan support to enable local inference on Intel Arc GPUs."
+---
+
+## Intro
+
+I have an Intel Arc A380 in my Dell T440 server for Plex and remote gaming through Sunshine. I set up [Hoarder](https://hoarder.app) and wanted a way to use the AI features without paying for OpenAI tokens. This proved extremely difficult, as none of the readily available solutions seemed to work.
+
+This was until I tried LMStudio. LMStudio worked out of the box, but launching it in a headless manner on boot is not possible (at least for me), not to mention the incompatibility of its OpenAPI implementation with Hoarder. I later learned that LMStudio uses a vulkan backend, and went on a quest to find an ollama version with vulkan support. 
+
+Ollama does not currently support Vulkan and it looks like it won't any time soon, (read about that [here](https://github.com/ollama/ollama/pull/5059#issuecomment-2629465081)) but there is an actively developed fork  by [@Whyvl](https://github.com/whyvl), [ollama-vulkan](https://github.com/whyvl/ollama-vulkan).
+
+Below are the steps needed to build and run ollama with a vulkan backend. 
+
+## Pre-requisites
+
+I used an Ubuntu 24.04 (Noble Numbat) host, so your mileage may vary under different distros.
+
+To install the required packages, issue the following commands:
+
+{{< highlight bash >}}
+sudo apt update
+sudo apt install git cmake wget libcap-dev golang-go 
+{{< /highlight >}}
+
+To install the vulkan-sdk, you need to run: 
+
+{{< highlight bash >}}
+wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
+sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-noble.list http://packages.lunarg.com/vulkan/lunarg-vulkan-noble.list
+sudo apt update
+sudo apt install vulkan-sdk
+{{< /highlight >}}
+
+You also need this file: <a href="https://github.com/user-attachments/files/18783263/0002-fix-fix-vulkan-building.patch" target="_blank">fix-vulkan-building.patch</a>. Save it somewhere easily accessible (like your downloads folder).
+
+## Setting up the repo
+
+Next, you need to set up the repositories and apply the patch you downloaded. Use:
+
+{{< highlight bash >}}
+git clone -b vulkan https://github.com/whyvl/ollama-vulkan.git
+cd ollama-vulkan
+
+git remote add ollama_vanilla https://github.com/ollama/ollama.git
+git fetch ollama_vanilla --tags
+
+# the latest release as of now is 0.5.11
+git checkout tags/v0.5.11 -b ollama_vanilla_stable
+git checkout vulkan
+
+git merge ollama_vanilla_stable --allow-unrelated-histories --no-edit
+
+patch -p1 -N < <path to patch file>
+{{< /highlight >}}
+
+## Building Ollama
+
+After downloading the repo and applying the patches, its time to build!
+
+Run:
+
+{{< highlight bash >}}
+make -f Makefile.sync clean sync
+
+# CPU libraries
+cmake --preset CPU
+cmake --build --parallel --preset CPU
+cmake --install build --component CPU --strip
+
+# Vulkan libraries
+cmake --preset Vulkan
+cmake --build --parallel --preset Vulkan
+cmake --install build --component Vulkan --strip
+
+# Binary
+source scripts/env.sh || true
+mkdir -p dist/bin
+go build -trimpath -buildmode=pie -o dist/bin/ollama .
+{{< /highlight >}}
+
+
+Once the build is finished, run the server with:
+
+{{< highlight bash >}}
+OLLAMA_HOST=0.0.0.0:11434 ./dist/bin/ollama serve
+{{< /highlight >}}
+
+If you get the error "Please enable CAP_PERFMON or run as root to use Vulkan.", you have to run the binary as root.
+
+## Automated Script
+
+If you don’t want to run all the steps manually, you can use this script:
+
+{{< highlight bash >}}
+#!/bin/bash
+
+export CGO_ENABLED=1
+export LDFLAGS=-s
+
+# Pre-requisites
+wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
+sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-noble.list http://packages.lunarg.com/vulkan/lunarg-vulkan-noble.list
+sudo apt update
+sudo apt install -y git vulkan-sdk cmake wget libcap-dev golang-go 
+
+mkdir -p /tmp/patches
+wget -O /tmp/patches/0002-fix-fix-vulkan-building.patch https://github.com/user-attachments/files/18783263/0002-fix-fix-vulkan-building.patch
+
+# Downloading repos and applying patches
+echo "Cloning and setting up ollama-vulkan repository..."
+REPO_DIR="/tmp/ollama-vulkan-git"
+rm -rf "${REPO_DIR}" 2>/dev/null || true
+git clone -b vulkan https://github.com/whyvl/ollama-vulkan.git "${REPO_DIR}"
+cd "${REPO_DIR}"
+
+git remote add ollama_vanilla https://github.com/ollama/ollama.git
+git fetch ollama_vanilla --tags
+git checkout tags/v0.5.11 -b ollama_vanilla_stable
+git checkout vulkan
+git merge ollama_vanilla_stable --allow-unrelated-histories --no-edit
+patch -p1 -N < /tmp/patches/0002-fix-fix-vulkan-building.patch
+make -f Makefile.sync clean sync
+
+# Building
+echo "Building CPU variant..."
+cmake --preset CPU
+cmake --build --parallel --preset CPU
+cmake --install build --component CPU --strip
+
+echo "Building Vulkan variant..."
+cmake --preset Vulkan
+cmake --build --parallel --preset Vulkan
+cmake --install build --component Vulkan --strip
+
+echo "Building final ollama binary..."
+cd "${REPO_DIR}"
+source scripts/env.sh || true
+mkdir -p dist/bin
+go build -trimpath -buildmode=pie -o dist/bin/ollama .
+
+# Done!
+echo "Build completed."
+echo "CPU libraries are in:      ${REPO_DIR}/dist/lib/ollama"
+echo "Vulkan libraries are in:   ${REPO_DIR}/dist/lib/ollama/vulkan"
+echo "ollama binary is in:       ${REPO_DIR}/dist/bin/ollama"
+{{< /highlight >}}
+
+## Done!
+
+You should now be able to load models using vulkan, leveraging your Intel GPU. 
+
+## Resources
+
+Special thanks to [@McBane87](https://github.com/McBane87) for a DockerFile that helped me build the project locally and to [@Dts0](https://github.com/Dts0) for the patch.
+
+- <a href="https://github.com/whyvl/ollama-vulkan" target="_blank">ollama-vulkan</a>
+- <a href="https://github.com/whyvl/ollama-vulkan/issues/7" target="_blank">ollama-vulkan/issues/7</a>
+- <a href="https://github.com/ollama/ollama" target="_blank">ollama</a>
+- <a href="https://github.com/ollama/ollama/pull/5059" target="_blank">ollama/pull/5059</a>
+
+# File: ./ollama_vulkan_intel/index.es.md
+
+---
+title: "Build ollama with vulkan support to enable local inference on Intel Arc GPUs"
+date: 2025-02-21
+explicitLastMod: 2025-02-22
+draft: true
+author: "Kovasky Buezo"
+tags:
+  - ollama
+  - vulkan
+  - intel arc
+  - ai
+image: images/ollama_service.webp
+description: "Build ollama with vulkan support to enable local inference on Intel Arc GPUs."
+---
+
+## Intro
+
+I have an Intel Arc A380 in my Dell T440 server for Plex and remote gaming through Sunshine. I set up [Hoarder](https://hoarder.app) and wanted a way to use the AI features without paying for OpenAI tokens. This proved extremely difficult, as none of the readily available solutions seemed to work.
+
+This was until I tried LMStudio. LMStudio worked out of the box, but launching it in a headless manner on boot is not possible (at least for me), not to mention the incompatibility of its OpenAPI implementation with Hoarder. I later learned that LMStudio uses a vulkan backend, and went on a quest to find an ollama version with vulkan support. 
+
+Ollama does not currently support Vulkan and it looks like it won't any time soon, (read about that [here](https://github.com/ollama/ollama/pull/5059#issuecomment-2629465081)) but there is an actively developed fork  by [@Whyvl](https://github.com/whyvl), [ollama-vulkan](https://github.com/whyvl/ollama-vulkan).
+
+Below are the steps needed to build and run ollama with a vulkan backend. 
+
+## Pre-requisites
+
+I used an Ubuntu 24.04 (Noble Numbat) host, so your mileage may vary under different distros.
+
+To install the required packages, issue the following commands:
+
+{{< highlight bash >}}
+sudo apt update
+sudo apt install git cmake wget libcap-dev golang-go 
+{{< /highlight >}}
+
+To install the vulkan-sdk, you need to run: 
+
+{{< highlight bash >}}
+wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
+sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-noble.list http://packages.lunarg.com/vulkan/lunarg-vulkan-noble.list
+sudo apt update
+sudo apt install vulkan-sdk
+{{< /highlight >}}
+
+You also need this file: <a href="https://github.com/user-attachments/files/18783263/0002-fix-fix-vulkan-building.patch" target="_blank">fix-vulkan-building.patch</a>. Save it somewhere easily accessible (like your downloads folder).
+
+## Setting up the repo
+
+Next, you need to set up the repositories and apply the patch you downloaded. Use:
+
+{{< highlight bash >}}
+git clone -b vulkan https://github.com/whyvl/ollama-vulkan.git
+cd ollama-vulkan
+
+git remote add ollama_vanilla https://github.com/ollama/ollama.git
+git fetch ollama_vanilla --tags
+
+# the latest release as of now is 0.5.11
+git checkout tags/v0.5.11 -b ollama_vanilla_stable
+git checkout vulkan
+
+git merge ollama_vanilla_stable --allow-unrelated-histories --no-edit
+
+patch -p1 -N < <path to patch file>
+{{< /highlight >}}
+
+## Building Ollama
+
+After downloading the repo and applying the patches, its time to build!
+
+Run:
+
+{{< highlight bash >}}
+make -f Makefile.sync clean sync
+
+# CPU libraries
+cmake --preset CPU
+cmake --build --parallel --preset CPU
+cmake --install build --component CPU --strip
+
+# Vulkan libraries
+cmake --preset Vulkan
+cmake --build --parallel --preset Vulkan
+cmake --install build --component Vulkan --strip
+
+# Binary
+source scripts/env.sh || true
+mkdir -p dist/bin
+go build -trimpath -buildmode=pie -o dist/bin/ollama .
+{{< /highlight >}}
+
+
+Once the build is finished, run the server with:
+
+{{< highlight bash >}}
+OLLAMA_HOST=0.0.0.0:11434 ./dist/bin/ollama serve
+{{< /highlight >}}
+
+If you get the error "Please enable CAP_PERFMON or run as root to use Vulkan.", you have to run the binary as root.
+
+## Automated Script
+
+If you don’t want to run all the steps manually, you can use this script:
+
+{{< highlight bash >}}
+#!/bin/bash
+
+export CGO_ENABLED=1
+export LDFLAGS=-s
+
+# Pre-requisites
+wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
+sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-noble.list http://packages.lunarg.com/vulkan/lunarg-vulkan-noble.list
+sudo apt update
+sudo apt install -y git vulkan-sdk cmake wget libcap-dev golang-go 
+
+mkdir -p /tmp/patches
+wget -O /tmp/patches/0002-fix-fix-vulkan-building.patch https://github.com/user-attachments/files/18783263/0002-fix-fix-vulkan-building.patch
+
+# Downloading repos and applying patches
+echo "Cloning and setting up ollama-vulkan repository..."
+REPO_DIR="/tmp/ollama-vulkan-git"
+rm -rf "${REPO_DIR}" 2>/dev/null || true
+git clone -b vulkan https://github.com/whyvl/ollama-vulkan.git "${REPO_DIR}"
+cd "${REPO_DIR}"
+
+git remote add ollama_vanilla https://github.com/ollama/ollama.git
+git fetch ollama_vanilla --tags
+git checkout tags/v0.5.11 -b ollama_vanilla_stable
+git checkout vulkan
+git merge ollama_vanilla_stable --allow-unrelated-histories --no-edit
+patch -p1 -N < /tmp/patches/0002-fix-fix-vulkan-building.patch
+make -f Makefile.sync clean sync
+
+# Building
+echo "Building CPU variant..."
+cmake --preset CPU
+cmake --build --parallel --preset CPU
+cmake --install build --component CPU --strip
+
+echo "Building Vulkan variant..."
+cmake --preset Vulkan
+cmake --build --parallel --preset Vulkan
+cmake --install build --component Vulkan --strip
+
+echo "Building final ollama binary..."
+cd "${REPO_DIR}"
+source scripts/env.sh || true
+mkdir -p dist/bin
+go build -trimpath -buildmode=pie -o dist/bin/ollama .
+
+# Done!
+echo "Build completed."
+echo "CPU libraries are in:      ${REPO_DIR}/dist/lib/ollama"
+echo "Vulkan libraries are in:   ${REPO_DIR}/dist/lib/ollama/vulkan"
+echo "ollama binary is in:       ${REPO_DIR}/dist/bin/ollama"
+{{< /highlight >}}
+
+## Done!
+
+You should now be able to load models using vulkan, leveraging your Intel GPU. 
+
+## Resources
+
+Special thanks to [@McBane87](https://github.com/McBane87) for a DockerFile that helped me build the project locally and to [@Dts0](https://github.com/Dts0) for the patch.
+
+- <a href="https://github.com/whyvl/ollama-vulkan" target="_blank">ollama-vulkan</a>
+- <a href="https://github.com/whyvl/ollama-vulkan/issues/7" target="_blank">ollama-vulkan/issues/7</a>
+- <a href="https://github.com/ollama/ollama" target="_blank">ollama</a>
+- <a href="https://github.com/ollama/ollama/pull/5059" target="_blank">ollama/pull/5059</a>
+
+# File: ./oneshot/index.md
+
+---
+title: "Starting a VM in Proxmox without Quorum"
+date: 2023-11-01
+explicitLastMod: 2024-11-16
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - Proxmox
+  - Systemd
+image: images/oneshot.webp
+description: "Start a vm on boot without quorum."
+---
+
+## Intro
+
+One of the nodes in my lab runs pfSense and if the vm is down, my network is down. This prevents my nodes from reaching quorum, and thus preventing pfSense from starting. To solve this, I needed a way for the vm to start without quorum. This was achieved by creating a oneshot service that runs at system startup.
+
+## Create the script
+
+Create a script in a folder of your choice, like ```/root/startpfSense.sh```. 
+
+Place the following inside it, replacing the vmID for the id of the vm you want to start:
+
+{{< highlight bash >}}
+#!/bin/bash
+
+sleep 5
+systemctl stop pve-cluster
+pmxcfs -l
+qm start $vmID
+sleep 5
+killall pmxcfs
+systemctl start pve-cluster
+{{< /highlight >}}
+
+After this, make sure to give it the proper permissions to make it executable.
+
+## Create the service file
+
+Now, create a service file like ```/etc/systemd/system/startpfSense.service``` and using a text editor add the following:
+
+{{< highlight bash >}}
+[Unit]
+Description=Start pfSense without quorum
+After=pve-cluster.service
+
+[Service]
+type=oneshot
+ExecStart=/root/startpfSense.sh
+
+[Install]
+WantedBy=multi-user.target
+{{< /highlight >}}
+
+## Enabling the service
+
+To enable the service, you would do ```systemctl daemon-reload``` and later ```systemctl enable startpfSense.service```. To check the status of the service, you would run ```systemctl status startpfSense```. 
+
+## Done!
+
+Now, your vm will be started on your next reboot.
+
+# File: ./erpnext_authelia/index.md
+
+---
+title: "Use Authelia as a social login provider for ERPNext"
+date: 2025-05-11
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - Authelia
+  - Active Directory
+  - ERPNext
+image: images/erpnext_authelia.webp
+description: "Use Authelia as a social login provider for ERPNext."
+---
+
+## Intro
+
+At the time of writing this post, I found no guide on setting up Authelia as a social provider for ERPNext. These are the steps I took to link them. 
+
+## Authelia
+
+If you have an LDAP server configured, you have to make sure the correct attributes are retrieved. The attributes section should look like follows.
+
+{{< highlight yaml >}}
+authentication_backend:
+  ldap:
+    implementation: custom
+    address: ldap://<server ip address>:389
+    start_tls: false
+    tls:
+      skip_verify: true
+      minimum_version: TLS1.2
+    base_dn: DC=mydomain,DC=com
+    attributes:
+      username: sAMAccountName
+      group_name: cn
+      mail: mail
+      display_name: displayname
+      given_name: givenName
+      family_name: sn
+    users_filter: (&(|({username_attribute}={input})({mail_attribute}={input}))(objectCategory=person)(objectClass=user)(!userAccountControl:1.2.840.113556.1.4.803:=2)(!pwdLastSet=0))
+    groups_filter: (&(member:1.2.840.113556.1.4.1941:={dn})(objectClass=group)(objectCategory=group))
+    user: CN=<bind account username>,CN=Users,DC=mydomain,DC=com
+    password: <bind account password>
+{{< /highlight >}}
+
+Once the ldap section is correct, you should proceed to the identity providers section to configure the ERPNext client. The client configuration for erpnext should look as follows:
+
+{{< highlight yaml >}}
+identity_providers:
+  oidc:
+    clients:
+    - client_id: erpnext
+      client_name: erpnext
+      client_secret: '$pbkdf2-sha512$310000$OYxF/9Lo7Rv1K30g3UH0bg$nH9ZVUX9zEYGPHnHHFbueWz6TbpHsdvjx.WgYGGwd31sRV.CIgGXz4EW0fwOuPpI9fiv2G8cyowb/zD8A8LiCg'
+      public: false
+      authorization_policy: one_factor
+      redirect_uris:
+        - https://<erpnext domain>/api/method/frappe.integrations.oauth2_logins.custom/authelia
+      scopes:
+        - openid
+        - profile
+        - email
+        - groups
+      userinfo_signed_response_alg: none
+      consent_mode: implicit
+      token_endpoint_auth_method: 'client_secret_post'
+{{< /highlight >}}
+
+To generate the client secret, you will have to issue the command ```docker run --rm authelia/authelia:latest authelia crypto hash generate pbkdf2 --variant sha512 --random --random.length 72 --random.charset rfc3986```
+
+The output should look like follows.
+
+{{< lazyimg img="images/authelia_client_digest.webp" maxSize="640x" alt="Generate a random password and digest for client configuration using Authelia" renderer="lqip-webp" >}}
+
+The digest will be used in the Authelia client configuration, as shown above. Copy the random password and keep it handy, as that will be used in the ERPNext configuration. Restart Authelia for the changes to take effect.
+
+## ERPNext Configuration
+
+In the dashboard, navigate to Integrations -> Social Login Key -> Add Social Login Key. The form can be filled as follows:
+
+##### Client Credentials
+- Social Login Provider: Custom
+- Provider Name: Authelia
+- Client ID: erpnext or whatever client id you used in the Authelia configuration
+- Client Secret: paste the random password generated in the previous step
+
+##### Identity Details
+- Icon: can leave blank or provide a url for an Authelia icon
+- Base URL: https://\<authelia domain\>
+
+##### Configuration
+- Sign Ups: Allow
+
+##### Client URLs
+- Authorize URL: /api/oidc/authorization
+- Redirect URL: https://\<erpnext domain\>/api/method/frappe.integrations.oauth2_logins.custom/authelia
+- Access Token URL: /api/oidc/token
+- API Endpoint: /api/oidc/userinfo
+
+##### Client Information
+- API Endpoint Args: empty
+- Auth URL Data: 
+{{< highlight json >}}
+{"scope": "openid profile email", "response_type": "code"}
+{{< /highlight >}}
+- User ID Property: email
+
+Make sure to click Enable Social Login and click on Save. If you wish to disable regular username login, navigate to System Settings -> Login and check Disable Username/Password Login. Click Save
+
+## Done!
+
+If everything is set up correctly, you will be able to login with Authelia. 
+
+# File: ./erpnext_authelia/index.es.md
+
+---
+title: "Usar Authelia como proveedor de acceso social para ERPNext"
+date: 2025-05-11
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - Authelia
+  - Active Directory
+  - ERPNext
+image: images/erpnext_authelia.webp
+description: "Usar Authelia como proveedor de acceso social para ERPNext."
+---
+
+## Intro
+
+Al momento de escribir esta publicación, no encontré ninguna guía para configurar Authelia como proveedor de acceso social para ERPNext. Estos son los pasos que seguí para vincularlos.
+
+## Configuración de Authelia
+
+Si tienes un servidor LDAP configurado, debes asegurarte de que se extraigan los atributos correctos. La sección de atributos debería mirarse similar al siguiente snippet.
+
+{{< highlight yaml >}}
+authentication_backend:
+  ldap:
+    implementation: custom
+    address: ldap://<dirección ip del servidor>:389
+    start_tls: false
+    tls:
+      skip_verify: true
+      minimum_version: TLS1.2
+    base_dn: DC=mydomain,DC=com
+    attributes:
+      username: sAMAccountName
+      group_name: cn
+      mail: mail
+      display_name: displayname
+      given_name: givenName
+      family_name: sn
+    users_filter: (&(|({username_attribute}={input})({mail_attribute}={input}))(objectCategory=person)(objectClass=user)(!userAccountControl:1.2.840.113556.1.4.803:=2)(!pwdLastSet=0))
+    groups_filter: (&(member:1.2.840.113556.1.4.1941:={dn})(objectClass=group)(objectCategory=group))
+    user: CN=<usuario de vinculación>,CN=Users,DC=mydomain,DC=com
+    password: <contraseña del usuario de vinculación>
+{{< /highlight >}}
+
+Una vez que la sección LDAP sea correcta, debes proceder a la sección de proveedores de identidad para configurar el cliente ERPNext. La configuración debería ser similar a la siguiente:
+
+{{< highlight yaml >}}
+identity_providers:
+  oidc:
+    clients:
+    - client_id: erpnext
+      client_name: erpnext
+      client_secret: '$pbkdf2-sha512$310000$OYxF/9Lo7Rv1K30g3UH0bg$nH9ZVUX9zEYGPHnHHFbueWz6TbpHsdvjx.WgYGGwd31sRV.CIgGXz4EW0fwOuPpI9fiv2G8cyowb/zD8A8LiCg'
+      public: false
+      authorization_policy: one_factor
+      redirect_uris:
+        - https://<dominio erpnext>/api/method/frappe.integrations.oauth2_logins.custom/authelia
+      scopes:
+        - openid
+        - profile
+        - email
+        - groups
+      userinfo_signed_response_alg: none
+      consent_mode: implicit
+      token_endpoint_auth_method: 'client_secret_post'
+{{< /highlight >}}
+
+Para generar el secreto del cliente, deberás ejecutar el comando ```docker run --rm authelia/authelia:latest authelia crypto hash generate pbkdf2 --variant sha512 --random --random.length 72 --random.charset rfc3986```
+
+El resultado debería ser similar al siguiente:
+
+{{< lazyimg img="images/authelia_client_digest.webp" maxSize="640x" alt="Generar una contraseña y digest para la configuración del cliente utilizando Authelia" renderer="lqip-webp" >}}
+
+El digest se utilizará en la configuración del cliente de Authelia, como se muestra arriba. Copia la contraseña generada y tenla a mano, ya que se usará en la configuración de ERPNext. Reinicia Authelia para que los cambios surtan efecto.
+
+## Configuración de ERPNext
+
+En el panel de control, navega hacia Integraciones -> Clave de Acceso Social -> Agregar Clave de Acceso Social. El formulario se puede completar de la siguiente manera:
+
+##### Credenciales del Cliente
+- Proveedor de Inicio de Sesión Social: Personalizar
+- Nombre del Proveedor: Authelia
+- Client ID: erpnext or cualquier ID de cliente que hayas usado en la configuración de Authelia
+- Client Secret: pegar la contraseña generada en el paso anterior
+
+##### Detalles de Identidad
+- Icono: can leave blank or provide a url for an Authelia icon
+- URL Base: https://\<authelia domain\>
+
+##### Configuración
+- Inscripciones: Permitir
+
+##### URL de Cliente
+- Autorizar URL: /api/oidc/authorization
+- Redireccionar URL: https://\<erpnext domain\>/api/method/frappe.integrations.oauth2_logins.custom/authelia
+- URL de Token de Acceso: /api/oidc/token
+- API Endpoint: /api/oidc/userinfo
+
+##### Información del Cliente 
+- Argumentos del endpoint de la API: empty
+- Datos de URL de autenticación: 
+{{< highlight json >}}
+{"scope": "openid profile email", "response_type": "code"}
+{{< /highlight >}}
+- Propiedad de ID de usuario: email
+
+Asegúrate de hacer clic en Habilitar Sesión Social y clic en Guardar. Si deseas deshabilitar el inicio de sesión con nombre de usuario, navega hacia Configuración de ERPNext -> Configuración del Sistema -> Iniciar sesión y haz clic en Deshabilitar el inicio de sesión con nombre de Usuario/Contraseña. Para finalizar, haz clic en Guardar.
+
+## Listo!
+
+Si todo está configurado correctamente, podrás iniciar sesión con Authelia.
+
+# File: ./plausible/index.md
+
+---
+title: "Set up Plausible Analytics Community Edition (self-hosted)"
+date: 2024-05-13
+explicitLastMod: 2024-06-13
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - Plausible
+  - Matomo
+  - Docker
+  - Linux
+  - Analytics
+image: images/plausible_google.webp
+description: "Set up Plausible Analytics Community Edition (self-hosted) with Google search console support."
+---
+
+## Intro
+
+In the search for an open-source Google Analytics alternative, two options stood out Matomo and Plausible. I wanted the tool to be privacy-friendly and that it did not require cookies, avoiding those pesky consent prompts. I did not find a straightforward guide to self-host Plausible with a Google Search Console integration which led me to create this post. 
+
+## Pre-requisite
+
+Ensure that your domain's ownership is confirmed in the Google Search Console. To do this, take a look at Google's guide [here](https://support.google.com/webmasters/answer/34592?hl=en).
+
+## Google Cloud Console
+
+To enable your Plausible instance to access site data, a client ID and key must be issued by the Google Cloud Console. This is completely free. 
+
+1. You start by navigating to the cloud console [here](https://console.cloud.google.com/welcome) and clicking "create or select a project".
+
+{{< lazyimg img="images/cloud_console_landing.webp" maxSize="640x" alt="google cloud console welcome page" renderer="lqip-webp" >}}
+
+2. A pop-up should appear prompting you to select a project. Click "new project" on the top right corner.
+
+{{< lazyimg img="images/cloud_console_popup.webp" maxSize="640x" alt="google cloud console pop up" renderer="lqip-webp" >}}
+
+3. Enter a suitable project name (like Plausible), leave Location as "No organization", and click "Create". After the project is created, a notification will appear allowing you to "Select Project". Just like this:
+
+{{< lazyimg img="images/cloud_console_notification.webp" maxSize="640x" alt="google cloud console notification" renderer="lqip-webp" >}}
+
+4. After clicking "Select Project", navigate to "APIs & Services" and click on "API Library". In the API Library, search for "Google Search Console API", select it, and click enable.
+
+{{< lazyimg img="images/cloud_console_api.webp" maxSize="640x" alt="google cloud console api selection" renderer="lqip-webp" >}}
+
+5. Once enabled, go back to the menu and select the "OAuth consent screen". On the OAuth consent screen, select "External" as "User Type" and click "Create". Give your app a name, enter a support email (preferably your Gmail account), set your app domain, add an authorized domain, add a developer contact, and click save and continue. After this step, it will lead to the Scopes section. Under this section, click "ADD OR REMOVE SCOPES". A popup will appear and you should select the "Google Search Console API" with read-only capabilities. 
+
+{{< lazyimg img="images/cloud_console_api_popup.webp" maxSize="640x" alt="google cloud console api pop up" renderer="lqip-webp" >}}
+
+6. After clicking update, the popup will close. Click on "SAVE AND CONTINUE" and add a test user (preferably your same Gmail account). After clicking "SAVE AND CONTINUE" you can then navigate to the left menu and click on "Credentials". In the Credentials pane, on the top left click on "CREATE CREDENTIALS" and select "OAuth client ID". Under Application type, select "Web Application" and give it an appropriate name. Under "Authorized redirect URIs", make sure to enter "https://<plausible_domain>/auth/google/callback". 
+
+7. After clicking Create, copy the "Client ID" and "Client Secret" which will be used in the next section.
+
+## Plausible Compose File
+
+With the prerequisites complete, you can go ahead and create your Plausible instance. This is my example compose file.
+
+{{< highlight yaml >}}
+
+services:
+  mail:
+    container_name: plausible_mail
+    image: bytemark/smtp
+    restart: unless-stopped
+    environment:
+      - MAILNAME=$MAILER_EMAIL
+      - RELAY_HOST=$SMTP_HOST_ADDR
+      - RELAY_PORT=587
+      - RELAY_USERNAME=$SMTP_USER_NAME
+      - RELAY_PASSWORD=$SMTP_USER_PWD
+    
+  plausible_db:
+    container_name: plausible_db
+    image: postgres:14-alpine
+    restart: unless-stopped
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=postgres
+
+  plausible_events_db:
+    container_name: plausible_events_db
+    image: clickhouse/clickhouse-server:23.3.7.5-alpine
+    restart: unless-stopped
+    volumes:
+      - event-data:/var/lib/clickhouse
+      - event-logs:/var/log/clickhouse-server
+      -  event-config:/etc/clickhouse-server/config.d
+      - event-user-config:/etc/clickhouse-server/users.d
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+
+  plausible:
+    container_name: plausible
+    image: plausible/community-edition:latest
+    restart: unless-stopped
+    command: sh -c "sleep 10 && /entrypoint.sh db createdb && /entrypoint.sh db migrate && /entrypoint.sh run"
+    depends_on:
+      - plausible_db
+      - plausible_events_db
+      - mail
+    ports:
+      - 8480:8000
+    environment:
+      - BASE_URL=$BASE_URL
+      - SECRET_KEY_BASE=$SECRET_KEY_BASE
+      - TOTP_VAULT_KEY=$TOTP_VAULT_KEY
+      - GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+      - GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
+      - MAILER_EMAIL=$MAILER_EMAIL
+      - CRON_ENABLED=true
+
+volumes:
+  db-data:
+    driver: local
+  event-data:
+    driver: local
+  event-logs:
+    driver: local
+  event-user-config:
+    driver: local
+  event-config:
+    driver: local
+
+{{< /highlight >}}
+
+The mail section is only required when you want to send emails for weekly reports or password recovery.
+
+Here is how you populate the other variables:
+- ${BASE_URL}, where plausible will be accessed (like a reverse proxy address)
+
+- ${SECRET_KEY_BASE}, generated using 'openssl rand -base64 48'
+
+- ${TOTP_VAULT_KEY}, generated using 'openssl rand -base64 32'
+
+- ${GOOGLE_CLIENT_ID}, the ID that we got from the previous step
+
+- ${GOOGLE_CLIENT_SECRET}, the secret that we got from the previous step
+
+## Plausible config
+
+After deploying Plausible, log in to configure a domain. Navigate to the settings page for that domain and link it with your Google Account specified as a Test User in the OAuth setup.
+
+## Done!
+
+Once set up with these steps and configs, Plausible should be integrated with Google's Search Console, providing you with a privacy-focused analytics tool.
+
+# File: ./pfsense_haproxy_mtls/index.es.md
+
+---
+title: "Connect Fail2Ban with pfSense"
+date: 2025-08-03
+draft: true
+author: "Kovasky Buezo"
+tags:
+  - Apache
+  - Fail2Ban
+  - Linux
+  - pfSense
+image: images/pfsense_alias.webp
+description: "pfSense Fail2Ban url alias."
+---
+# File: ./ubuntu_virtual_monitor/index.md
+
+---
+title: "Configure a Virtual Display for Sunshine using Ubuntu on Xorg with Nvidia"
+date: 2025-11-10
+explicitLastMod: 2025-11-22
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - xorg
+  - ubuntu
+  - sunshine
+  - streaming
+  - linux
+  - virtual display
+image: images/nvidia_x_settings.webp
+description: "Nvidia X-Settings on Ubuntu 24.04."
+---
+
+## Intro
+
+I was tired of playing around with streaming settings that never quite fit my phone's display perfectly. I wanted to maximize the resolution and refresh rate *a la <a href="https://github.com/ClassicOldSong/Apollo" target="_blank">Apollo</a>*, which sets up virtual displays automatically for each client but is Windows only. After some trial and error, I figured out how to set up a virtual display under Ubuntu 24.04 (on Xorg) that perfectly matches my phone's screen. Here's how I did it.
+
+## Pre-requisites
+
+- [Sunshine server](https://github.com/LizardByte/Sunshine) installed
+- Ubuntu with Xorg (not Wayland)
+- Nvidia GPU with proprietary or open drivers (not nouveau)
+
+## Disabling Wayland
+
+Before proceeding, verify you're on wayland or x11 by running `echo $XDG_SESSION_TYPE`.
+
+If you're on Wayland, disable it by editing `/etc/gdm3/custom.conf`, and uncommenting `WaylandEnable=false`. Your configuration should look like:
+
+```bash
+[daemon]
+# Uncomment the line below to force the login screen to use Xorg
+WaylandEnable=false
+```
+
+Apply the changes by running `sudo systemctl restart gdm3` or rebooting your host.
+
+## Writing the xorg.conf file
+
+First, make sure you have a xorg.conf generated for your setup. If there's no `/etc/X11/xorg.conf` file, you'll need to generate one using Nvidia X Settings.
+
+Open the application and navigate to "X Server Display Configuration", then click on "Save to X Configuration File". If you get an error saying "Unable to open X config file '/etc/X11/xorg.conf' for writing", close the application, run it as root `sudo nvidia-settings` and try saving the configuration again.
+
+The generated file should look something like this: 
+
+```bash
+Section "ServerLayout"
+    Identifier     "Layout0"
+    Screen      0  "Screen0" 0 0
+    InputDevice    "Keyboard0" "CoreKeyboard"
+    InputDevice    "Mouse0" "CorePointer"
+    Option         "Xinerama" "0"
+EndSection
+
+Section "Files"
+EndSection
+
+Section "Module"
+    Load           "dbe"
+    Load           "extmod"
+    Load           "type1"
+    Load           "freetype"
+    Load           "glx"
+EndSection
+
+Section "InputDevice"
+    Identifier     "Mouse0"
+    Driver         "mouse"
+    Option         "Protocol" "auto"
+    Option         "Device" "/dev/psaux"
+    Option         "Emulate3Buttons" "no"
+    Option         "ZAxisMapping" "4 5"
+EndSection
+
+Section "InputDevice"
+    Identifier     "Keyboard0"
+    Driver         "kbd"
+EndSection
+
+Section "Monitor"
+    Identifier     "Monitor0"
+    VendorName     "Unknown"
+    ModelName      "DELL S3423DWC"
+    HorizSync       30.0 - 160.0
+    VertRefresh     48.0 - 100.0
+    Option         "DPMS"
+EndSection
+
+Section "Device"
+    Identifier     "Device0"
+    Driver         "nvidia"
+    VendorName     "NVIDIA Corporation"
+    BoardName      "NVIDIA GeForce RTX 5060"
+EndSection
+
+Section "Screen"
+    Identifier     "Screen0"
+    Device         "Device0"
+    Monitor        "Monitor0"
+    DefaultDepth    24
+    Option         "Stereo" "0"
+    Option         "nvidiaXineramaInfoOrder" "DFP-0"
+    Option         "metamodes" "3440x1440_100 +0+0"
+    Option         "SLI" "Off"
+    Option         "MultiGPU" "Off"
+    Option         "BaseMosaic" "off"
+    SubSection     "Display"
+        Depth       24
+    EndSubSection
+EndSection
+```
+
+You should make a copy so you can revert back to it by running `sudo cp /etc/X11/xorg.conf /etc/X11/xorg.conf.bak`. To add the virtual display, you'll need to modify the "Device" and "Screen" sections. Here's what worked for me:
+
+```bash
+Section "Device"
+    Identifier     "Device0"
+    Driver         "nvidia"
+    VendorName     "NVIDIA Corporation"
+    BoardName      "NVIDIA GeForce RTX 5060"
+    Option         "AllowEmptyInitialConfiguration" "True"
+    Option         "ConnectedMonitor" "DFP-0, DFP-3"
+    Option         "UseEDID" "DFP-0:TRUE, DFP-3:FALSE"
+    Option         "UseEDIDDPI" "DFP-0:TRUE, DFP-3:FALSE"
+    Option         "UseEDIDFreqs" "DFP-0:TRUE, DFP-3:FALSE"
+    Option         "ModeValidation" "DFP-3: NoMaxPClkCheck, NoEdidMaxPClkCheck, NoMaxSizeCheck, NoHorizSyncCheck, NoVertRefreshCheck, AllowNonEdidModes, NoVesaModes, NoPredefinedModes"
+    Option         "Coolbits" "28"
+EndSection
+
+Section "Screen"
+    Identifier     "Screen0"
+    Device         "Device0"
+    Monitor        "Monitor0"
+    DefaultDepth    24
+    Option         "Stereo" "0"
+    Option         "nvidiaXineramaInfoOrder" "DFP-0"
+    Option         "metamodes" "HDMI-0: 3440x1440_100 +0+0, DP-2: 1024x768_60 +3440+0"
+    Option         "SLI" "Off"
+    Option         "MultiGPU" "Off"
+    Option         "BaseMosaic" "off"
+    SubSection     "Display"
+        Depth       24
+        Modes      "3440x1440_100" "1024x768_60"
+    EndSubSection
+EndSection
+```
+
+With this configuration, you're telling Xorg that there's a device connected on DFP-3 and to render a screen there, your virtual display. In my case, DFP-0 is my connected HDMI port (referred to as HDMI-0) and DFP-3 is an unconnected DisplayPort (referred to as DP-2). Make sure to write the appropriate coordinates for your virtual display. In my case, I wanted it to the right of my real display, so I placed it at `+3440+0`.
+
+**Update on 2025-11-22**: After troubleshooting a reader's setup, we found out that only certain DisplayPort outputs were usable for this virtual display configuration. His main display is connected to DP-2 (DFP-3) and after some trial and error we identified DP-0 (DFP-1) as the only port that could be attached to a virtual monitor. It is also common for graphic cards to present more ports than what is physically present so make sure to choose accordingly. Expect some trial and error until you get a working configuration.
+
+{{< lazyimg img="images/screen_display_settings.webp"  alt="Screen Display Settings showing a virtual monitor." renderer="lqip-webp" >}}
+
+To find the names of your ports, check the Xorg log file, `cat ~/.local/share/xorg/Xorg.0.log`. You'll see output similar to:
+
+```bash
+[ 10107.991] (--) NVIDIA(GPU-0): DELL S3423DWC (DFP-0): connected
+[ 10107.991] (--) NVIDIA(GPU-0): DELL S3423DWC (DFP-0): Internal TMDS
+[ 10107.991] (--) NVIDIA(GPU-0): DELL S3423DWC (DFP-0): 600.0 MHz maximum pixel clock
+[ 10107.991] (--) NVIDIA(GPU-0):
+[ 10107.991] (--) NVIDIA(GPU-0): DFP-1: disconnected
+[ 10107.992] (--) NVIDIA(GPU-0): DFP-1: Internal DisplayPort
+[ 10107.992] (--) NVIDIA(GPU-0): DFP-1: 2380.0 MHz maximum pixel clock
+[ 10107.992] (--) NVIDIA(GPU-0):
+[ 10107.992] (--) NVIDIA(GPU-0): DFP-2: disconnected
+[ 10107.992] (--) NVIDIA(GPU-0): DFP-2: Internal TMDS
+[ 10107.992] (--) NVIDIA(GPU-0): DFP-2: 165.0 MHz maximum pixel clock
+[ 10107.992] (--) NVIDIA(GPU-0):
+[ 10108.006] (--) NVIDIA(GPU-0): DFP-3: disconnected
+[ 10108.006] (--) NVIDIA(GPU-0): DFP-3: Internal DisplayPort
+[ 10108.006] (--) NVIDIA(GPU-0): DFP-3: 2380.0 MHz maximum pixel clock
+[ 10108.006] (--) NVIDIA(GPU-0):
+[ 10108.006] (--) NVIDIA(GPU-0): DFP-4: disconnected
+[ 10108.006] (--) NVIDIA(GPU-0): DFP-4: Internal TMDS
+[ 10108.006] (--) NVIDIA(GPU-0): DFP-4: 165.0 MHz maximum pixel clock
+[ 10108.006] (--) NVIDIA(GPU-0):
+[ 10108.006] (--) NVIDIA(GPU-0): DFP-5: disconnected
+[ 10108.007] (--) NVIDIA(GPU-0): DFP-5: Internal DisplayPort
+[ 10108.007] (--) NVIDIA(GPU-0): DFP-5: 2380.0 MHz maximum pixel clock
+[ 10108.007] (--) NVIDIA(GPU-0):
+[ 10108.007] (--) NVIDIA(GPU-0): DFP-6: disconnected
+[ 10108.007] (--) NVIDIA(GPU-0): DFP-6: Internal TMDS
+[ 10108.007] (--) NVIDIA(GPU-0): DFP-6: 165.0 MHz maximum pixel clock
+```
+
+After making these changes, reboot your PC. You should now have a virtual display. You can verify this in Screen Display Settings where you'll see a second monitor.
+
+Keep the virtual display resolution as a standard one for now, as non-standard resolutions require additional configuration. If your streaming device uses a standard resolution (like 1920x1080 or 2560x1440), you can skip to the "Configuring Sunshine" section.
+
+## Setting a custom resolution
+
+According to the moonlight client, my streaming device has a safe resolution of 2430x1290, definitely a non-standard one. To set your virtual display to a non-standard resolution, you first need to generate a modeline. 
+
+```bash
+$ cvt 2430 1290 120
+
+# Outputs:
+Modeline "2432x1290_120.00"  560.75  2432 2640 2904 3376  1290 1293 1303 1385 -hsync +vsync
+```
+
+Where 2430 is your width, 1290 is your height and 120 is your refresh rate. 
+
+Next, create a script at `/usr/sbin/set-virtual-display.sh`. Don't forget to make it executable with `chmod +x`. 
+
+```bash
+#!/bin/bash
+
+# This may look a bit different depending on your resolution
+# I removed the .00 from the name
+xrandr --output DP-2 --newmode "2432x1290_120" 560.75 2432 2640 2904 3376 1290 1293 1303 1385 -hsync +vsync 2>/dev/null
+xrandr --addmode DP-2 2432x1290_120
+xrandr --output DP-2 --mode 2432x1290_120 --right-of HDMI-0
+echo "Virtual display configured at 2432x1290@120Hz"
+```
+
+Test the script to make sure the resolution works. To make it run automatically on boot, create an autostart file (you could also create a oneshot service with systemd):
+
+```bash
+# create the directory
+$ mkdir ~/.config/autostart/
+
+# populate the .desktop file
+$ cat > ~/.config/autostart/configure-virtual-display.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Exec=/usr/sbin/set-virtual-display.sh
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=5
+Name=Configure Virtual Display
+Comment=Sets virtual display to a custom resolution
+EOF
+```
+
+Reboot your PC and check that the custom resolution is applied correctly. You can verify this in Screen Display Settings or by checking the Xorg log file.
+
+## Configuring Sunshine
+
+By default, Sunshine picks your main display to stream. To ensure it uses the virtual display when streaming, we need to add some commands under "Command Preparations" in Sunshine's configuration.
+
+In the Sunshine web interface, navigate to Configuration -> Applications. Under any app you want to stream (or create a new one), add the following:
+
+**Do Command**: `xrandr --output <virtual display, like DP-2> --primary`
+
+**Undo Command**: `xrandr --output <actual display, like HDMI-0> --primary`
+
+This ensures that your virtual display is set as primary when streaming starts, and switches back to your main display when streaming ends. Games and applications will launch on the virtual display, giving you perfect resolution matching for your streaming device.
+
+{{< lazyimg img="images/iphone_safe_area.webp"  alt="iPhone Moonlight streaming with safe area resolution." renderer="lqip-webp" >}}
+
+Please note that the black bars surrounding my stream are due to the notch on my phone (hence the safe area).
+
+## Done!
+
+After setting everything up, you should have a virtual display that's automatically selected when streaming through a Moonlight-compatible client. Your games will render at the exact resolution of your device, giving you the best possible streaming experience!
+
+# File: ./ubuntu_virtual_monitor/index.es.md
+
+---
+title: "Connect Fail2Ban with pfSense"
+date: 2025-08-03
+draft: true
+author: "Kovasky Buezo"
+tags:
+  - Apache
+  - Fail2Ban
+  - Linux
+  - pfSense
+image: images/pfsense_alias.webp
+description: "pfSense Fail2Ban url alias."
+---
+# File: ./login_shell/index.md
+
+---
+title: "Replace the default shell for domain users on Linux"
+date: 2024-04-02
+explicitLastMod: 2024-05-17
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - FreeIPA
+  - Active Directory
+  - Linux
+  - Bash
+image: images/no_domain_login.webp
+description: "Replace the default shell for domain users on Linux in favour of bash."
+---
+
+## Intro
+
+After setting up the AD trust, every time I logged in the shell defaulted to /bin/sh. To change it to /bin/bash or any other shell of your choice you can do the following.
+
+## Editing SSSD.conf
+
+Navigate to /etc/sssd/ and open sssd.conf in an elevated text editor. It should look something like
+
+{{< highlight bash >}}
+[domain/lin.mydomain.com]
+...
+use_fully_qualified_names = false
+
+[domain/lin.mydomain.com/win.mydomain.com]
+use_fully_qualified_names = false
+
+[sssd]
+...
+{{< /highlight >}}
+
+After each domain, add your override shell. Something like:
+
+{{< highlight bash >}}
+[domain/lin.mydomain.com]
+...
+use_fully_qualified_names = false
+override_shell = /bin/bash
+
+[domain/lin.mydomain.com/win.mydomain.com]
+use_fully_qualified_names = false
+override_shell = /bin/bash
+[sssd]
+...
+{{< /highlight >}}
+
+## Restart SSSD service
+
+After the modification has taken place, just restart the service with the following command:
+
+{{< highlight bash >}}
+sudo systemctl restart sssd
+{{< /highlight >}}
+
+You're done! Next time you log in with your domain credentials, your default shell will be overriden.
+
+# File: ./homelab/index.md
+
+---
+title: "Homelab"
+date: 2023-10-30
+explicitLastMod: 2024-11-16
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - Proxmox
+  - Homelab
+  - Debian
+  - pfSense
+  - Ansible
+image: images/homelab.webp
+description: "My homelab!"
+---
+
+## Intro
+
+This is just a post to describe my homelab setup and make it linkable where needed (like in my resume). This is most definitely subject to change at any time as I continue to play with new technologies and keep adding things! 
+
+## Hosts
+
+My homelab consists of a one node proxmox host and a terramaster NAS.
+
+The specs are:
+
+##### Dell Poweredge T440
+- 2x Xeon Gold 6126 (48 logical cores)
+- 128GB RAM
+- 1x 118GB Intel Optane NVME
+- 2x 1TB MX500 SSD
+- 2x 8TB Toshiba SAS Drive
+- 1x 14TB IronWolf Pro Drive
+- 1x Nvidia Quadro M2000
+
+For storage I have a TerraMaster F2-220 running DSM through tinycore with 2x 6TB Ironwolf HDDs.
+
+## Use Cases
+
+My homelab is mainly to have fun! I enjoy tinkering and learning new technologies so I put most of my free time in this :)
+
+Some cool stuff im doing is the following: 
+
+- pfSense directly hooked to my ISPs modem with BIND and Suricata to have control over my local network.  
+- Homebridge to have remote access to my custom IP camera built using an ESP32.
+- Plex for viewing my media on the go.
+- WireGuard for outside access to my servers.
+- Nginx + Authelia + Fail2Ban to expose services over the web as well as automatically ban unauthorized access attempts at a Cloudflare level.
+
+## What am I running?
+
+VMS: 
+- pfSense
+- NTP Server
+- FreeIPA
+- Ansible
+- Docker
+- HomeBridge
+- Plex
+
+Containers:
+- Authelia
+- Dashy
+- Fail2ban
+- Guacamole
+- Kanboard
+- Mariadb
+- Matomo
+- Nginx Proxy Manager
+- OpenSpeedTest
+- Overseerr
+- Portioner
+- Prowlarr
+- Radarr
+- Redis
+- Sonarr
+- Transmission
+- Uptime Kuma
+- Watchtower
+
+## Diagram
+
+I will post a diagram here :)
+
+# File: ./sr_iov/index.md
+
+---
+title: "Enabling SR-IOV for an Intel X540-T2 on Proxmox 8"
+date: 2024-08-12
+draft: false
+author: "Kovasky Buezo"
+tags:
+ - Dell
+ - Intel
+ - NIC
+ - Linux
+ - Windows
+ - Proxmox
+ - Bash
+ - IOMMU
+ - Passthrough
+image: images/iperf.webp
+description: "Enabling SR-IOV for an Intel X540-T2 on a Dell Poweredge T440 running Proxmox 8."
+---
+
+## Intro
+
+In the quest to get more performance out of my inter-vm communication, I stumbled upon SR-IOV and virtual functions. I then purchased a 10gbe X540-T2 from a Chinese seller on eBay making sure to get one with a fan, as reports of this specific card say it runs quite hot. After setting everything up, I increased my network performance from 2.5gbps on a vSwitch to 14gbps with virtual function passthrough.
+
+## Pre-requisites
+
+Before proceeding, make sure to enable IOMMU by editing ```/etc/default/grub``` and replacing the ```GUB_CMDLINE_LINUX_DEFAULT``` lines as follows:
+
+{{< highlight bash >}}
+GRUB_CMDLINE_LINUX_DEFAULT="quiet intel_iommu=on iommu=pt"
+{{< /highlight >}}
+
+Once the edit is in place, run the command:
+
+{{< highlight bash >}}
+update grub
+{{< /highlight >}}
+
+Now, you have to enable some VFIO modules by editing the file ```/etc/modules``` and adding these lines at the end of the file:
+
+{{< highlight bash >}}
+vfio
+vfio_iommu_type1
+vfio_pci
+vfio_virqfd
+{{< /highlight >}}
+
+To make sure these modules are loaded on the next boot you have to issue the command:
+
+{{< highlight bash >}}
+update-initramfs -u -k all
+{{< /highlight >}}
+
+All that is left is to reboot the system to make sure IOMMU and corresponding VFIO modules are enabled.
+
+## Testing SR-IOV
+
+Before issuing the commands to enable SR-IOV, you need to find out which network interfaces are associated with the network card. There are several approaches to this, including using the web GUI. In my case, I just issued the command:
+
+{{< highlight bash >}}
+dmesg | grep eth
+{{< /highlight >}}
+
+Then, I looked for lines that resemble the following:
+
+{{< highlight bash >}}
+[    4.602387] ixgbe 0000:5f:00.0 ens5f0: renamed from eth0
+[    4.686386] ixgbe 0000:5f:00.1 ens5f1: renamed from eth1
+{{< /highlight >}}
+
+An easy way to test out SR-IOV is to issue the command:
+
+{{< highlight bash >}}
+echo N > /sys/class/net/<NIC>/device/sriov_numvfs
+{{< /highlight >}}
+
+In my case, the command would look something like:
+
+{{< highlight bash >}}
+echo 2 > /sys/class/net/ens5f1/device/sriov_numvfs
+{{< /highlight >}}
+
+To make sure this is working, you can issue ```ip link show NIC``` and if everything is working as it should the output should be something similar to this:
+
+{{< highlight bash >}}
+root@pve:~# ip link show ens5f1
+5: ens5f1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9000 qdisc mq state UP mode DEFAULT group default qlen 1000
+ link/ether XX:XX:XX:XX:XX:XX brd ff:ff:ff:ff:ff:ff
+ vf 0     link/ether 00:00:00:00:00:00 brd ff:ff:ff:ff:ff:ff, spoof checking on, link-state auto, trust off, query_rss off
+ vf 1     link/ether 00:00:00:00:00:00 brd ff:ff:ff:ff:ff:ff, spoof checking on, link-state auto, trust off, query_rss off
+ altname enp95s0f1
+{{< /highlight >}}
+
+## Automating the virtual function generation
+
+The changes performed in the previous step are not saved across reboots. To circumvent this, you can create a systemd service that runs on boot and tells the system to create the virtual functions as well as assign a MAC address to them. You need to create and edit the file ```/etc/systemd/system/sriov_nic.service```. It should contain something similar to:
+
+{{< highlight bash >}}
+[Unit]
+Description=Enables SR-IOV and assigns MAC Addresses to the virtual functions
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/bash -c '/usr/bin/echo 2 > /sys/class/net/ens5f1/device/sriov_numvfs'
+
+ExecStart=/usr/bin/bash -c '/usr/bin/ip link set ens5f1 vf 0 mac 82:ea:27:28:e8:d5'
+ExecStart=/usr/bin/bash -c '/usr/bin/ip link set ens5f1 vf 1 mac 6e:e2:6a:a8:99:64'
+
+[Install]
+WantedBy=multi-user.target
+{{< /highlight >}}
+
+After the file is created, you need to run ```systemctl daemon-reload``` and then ```systemctl enable --now sriov_nic``` to start the service at every boot."
+
+## Autostarting the Network Cards
+
+It's important to note that the physical NIC needs to be set to autostart; otherwise, the creation of virtual functions will fail. To do this navigate to the web GUI and under network, click edit on the appropriate card, tick the box autostart, and click on ok to apply the changes. 
+
+## Assign Virtual Functions to VMs
+
+To assign the virtual functions to the VMs, you first need to blacklist the driver so that the host does not take control of them. To do this you need to edit ```/etc/modprobe.d/pve-blacklist.conf``` and add the following line at the end of the file:
+
+{{< highlight bash >}}
+blacklist ixgbevf
+{{< /highlight >}}
+
+Then you have to run ```update-initramfs -u -k all``` to make sure the changes are applied on every boot. 
+
+Next, proceed to your chosen VM, and click on hardware -> Add -> PCI Device. Here, click on Raw Device and select a virtual function. Make sure that the options ROM-Bar is selected and PCI-Express is unselected.
+
+{{< lazyimg img="images/pci_device.webp" maxSize="920x" alt="pci device selection screen with virtual functions" renderer="lqip-webp" >}}
+
+## Windows hosts
+
+In my case, the network card was not automatically detected by my Windows Server 2019 VM. I had to download the appropriate drivers for my setup, which can be found [here](https://www.intel.com/content/www/us/en/download/19372/intel-network-adapter-driver-for-windows-server-2019.html).
+
+## Done!
+
+Once everything is set up, you will be able to benefit from network hardware acceleration!
+# File: ./powershell_ntfy/index.md
+
+---
+title: "Send push notifications to your mobile phone with ntfy.sh via PowerShell"
+date: 2025-07-08
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - PowerShell
+  - ntfy.sh
+  - PowerShell 5.0
+  - PowerShell 7.1
+  - Windows
+  - Windows Server 2016
+image: images/powershell_ntfy.webp
+description: "Send push notifications to your mobile phone with ntfy.sh via PowerShell."
+---
+
+## Intro
+
+I had a few PowerShell tasks set up in my server with no way of knowing their status unless I checked for logs. Logging in and searching for logs easily becomes a hassle when you have more than one VM. I needed a less time consuming method, so I found a way to send push alerts to my mobile phone using ntfy.
+
+## Pre-requisites
+
+For this setup to work, you should have a running instance of ntfy.sh. You can find the installation instructions [here](https://docs.ntfy.sh/install/). You can find my personal docker compose file [here](blogs/proxmox_ntfy/)
+
+I am running the stock PowerShell version installed in Windows Server 2016 and encountered some issues reaching my ntfy endpoint due to certificate validation failures. To avoid this, I added the following in my script.
+
+{{< highlight powershell >}}
+Add-Type @"
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
+public class TrustAllCertsPolicy : ICertificatePolicy {
+    public bool CheckValidationResult(
+    ServicePoint srvPoint, X509Certificate certificate,
+    WebRequest request, int certificateProblem) {
+        return true;
+    }
+}
+"@
+
+[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+
+$allProtocols = [System.Net.SecurityProtocolType]'Ssl3,Tls,Tls11,Tls12'
+[System.Net.ServicePointManager]::SecurityProtocol = $allProtocols
+{{< /highlight >}}
+
+## Powershell Script
+
+To send a message to ntfy, you just have to add a POST request to your script as follows:
+
+{{< highlight powershell >}}
+$bearerToken="your encoded token"
+
+$Request = @{
+  Method = "POST"
+  URI = "https://ntfy.yourdomain.com/scripts?auth=$bearerToken"
+  Headers = @{
+    Title = $title # title is the notification header
+  }
+  Body = $body # body is the content of your notification
+}
+Invoke-RestMethod @Request
+{{< /highlight >}}
+
+To get an access token, log into your ntfy web interface and navigate to your account settings. Create an access token and make sure to select `Token never expires` for convenience. Once created, copy the token and format it as `Bearer tk_token`. Finally, encode this entire string in base64 using an online tool like [this one](https://www.base64encode.org/).
+
+## Done!
+
+If everything is set up correctly, you will be able to receive status information from your scripts directly to your phone.
+
+# File: ./powershell_ntfy/index.es.md
+
+---
+title: "Enviá notificaciones push a tu móvil con ntfy.sh mediante PowerShell"
+date: 2025-07-08
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - PowerShell
+  - ntfy.sh
+  - PowerShell 5.0
+  - PowerShell 7.1
+  - Windows
+  - Windows Server 2016
+image: images/powershell_ntfy.webp
+description: "Enviá notificaciones push a tu móvil con ntfy.sh mediante PowerShell."
+---
+
+## Intro
+
+Tenía algunas tareas de PowerShell configuradas en mi servidor sin forma de conocer su estado a menos que revisara los registros de eventos. Iniciar sesión y buscar información en los registros se convierte en una molestia cuando tenés que revisar más de uno. Buscaba un método que consumiera menos tiempo, así que encontré la forma de enviar alertas push a mi móvil usando ntfy.sh.
+
+## Prerrequisitos
+
+Para que esta configuración funcione, debés tener una instancia de ntfy.sh. Podés encontrar las instrucciones de instalación [aquí](https://docs.ntfy.sh/install/) y mi archivo personal docker compose [aquí](blogs/proxmox_ntfy/).
+
+Estoy utilizando la versión predeterminada de PowerShell que viene instalada en Windows Server 2016 y encontré algunos problemas para alcanzar mi endpoint de ntfy debido a fallas en la validación de certificados. Para evitar esto, agregué lo siguiente en mi script.
+
+{{< highlight powershell >}}
+Add-Type @"
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
+public class TrustAllCertsPolicy : ICertificatePolicy {
+    public bool CheckValidationResult(
+    ServicePoint srvPoint, X509Certificate certificate,
+    WebRequest request, int certificateProblem) {
+        return true;
+    }
+}
+"@
+
+[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+
+$allProtocols = [System.Net.SecurityProtocolType]'Ssl3,Tls,Tls11,Tls12'
+[System.Net.ServicePointManager]::SecurityProtocol = $allProtocols
+{{< /highlight >}}
+
+## Script de PowerShell
+
+Para enviar un mensaje a ntfy, solo tenés que agregar una solicitud POST a tu script de la siguiente manera:
+
+{{< highlight powershell >}}
+$bearerToken="tu token codificado"
+
+$Request = @{
+  Method = "POST"
+  URI = "https://ntfy.tudominio.com/scripts?auth=$bearerToken"
+  Headers = @{
+    Title = $title # title es el encabezado de la notificación
+  }
+  Body = $body # body es el contenido de tu notificación
+}
+Invoke-RestMethod @Request
+{{< /highlight >}}
+
+Para obtener un token de acceso, iniciá sesión en tu interfaz web de ntfy y navegá a la configuración de tu cuenta. Creá un token de acceso y  asegurate de seleccionar `Token never expires`. Una vez creado, copiá el token y formatealo como `Bearer tk_token`. Finalmente, codificá toda la string en base64 usando una herramienta en línea como [ésta](https://www.base64encode.org/).
+
+## Listo!
+
+Si todo está configurado correctamente, recibirás información de estado de tus scripts directamente en tu teléfono.
+
+# File: ./plex_ramdisk/index.md
+
+---
+title: "Set up a ramdisk for Plex"
+date: 2024-05-01
+explicitLastMod: 2024-05-17
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - Linux
+  - Ubuntu
+  - Plex
+image: images/plex_ramdisk.webp
+description: "Set up a ramdisk for Plex to decrease SSD writes."
+---
+
+## Intro
+
+Always on the lookout to decrease writes on my consumer SSDs, I stumbled upon the idea of a ramdisk for Plex transcodes. In theory it should offer a performance boost, but in practice I did not really notice any improvements besides lowering SSD writes.
+
+## Editing fstab
+
+Navigate to /etc/fstab and open it for edition. You should see your boot disk and any other mapped media there. Add the following line:
+
+{{< highlight bash >}}
+tmpfs /dev/shm tmpfs defaults,noexec,nosuid,size=<SIZE IN GB> 0 0
+{{< /highlight >}}
+
+The size can be as much as half of your total available RAM. Also, you can technically mount it in any directory, just make sure it exists beforehand. After editing your fstab, you can just issue the command mount -a using a privileged user and the ramdisk will be mounted.
+
+## Editing the Plex server config
+
+Navigate to the plex server settings -> transcoder, and under the temporary directory, write the location of your ram disk, e.g. /dev/shm. 
+
+It should look like the featured image.
+
+## Done!
+
+The next transcoder playback should utilize the ram disk and avoid unnecesary disk writes! 
+
+# File: ./pfsense_haproxy_authelia/index.md
+
+---
+title: "Configure HAProxy with Authelia on pfSense"
+date: 2025-08-18
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - Authelia
+  - HAProxy
+  - pfSense
+image: images/authelia_login.webp
+description: "Authelia login page using HAProxy."
+---
+
+## Intro
+
+Some of my hosted services do not have OIDC support or any sort of authentication out of the box. Since I am already running an instance of Authelia, I decided to use it to secure those services. It was not as straight forward as I thought, specially using HAProxy on pfSense. There are a few outdated guides that accomplish this but they still missed a step or two to get it working right.
+
+## Pre-requisites
+
+- pfSense with haproxy-devel package installed
+- A working Authelia instance already configured and accessible
+- Basic understanding of HAProxy ACLs and actions
+- Services you want to protect must be accessible through HAProxy
+
+## Setting up the Lua Scripts
+
+You need to download 3 scripts into ```/usr/local/share/lua/5.3``` on your pfsense host. 
+
+
+- <a href="https://raw.githubusercontent.com/rxi/json.lua/refs/heads/master/json.lua" target="_blank">json.lua&#128279;</a>
+- <a href="https://raw.githubusercontent.com/haproxytech/haproxy-lua-http/refs/heads/master/http.lua" target="_blank">haproxy-lua-http.lua&#128279;</a>
+- <a href="https://raw.githubusercontent.com/TimWolla/haproxy-auth-request/refs/heads/main/auth-request.lua" target="_blank">auth-request.lua&#128279;</a>
+
+First, you need to add the ```auth-request.lua``` file via the HAProxy -> Files section, setting the type to Lua Script and the content to the one on the link above. It should look the following screenshot.
+
+{{< lazyimg img="images/haproxy_pfsense_files.webp"  alt="HAProxy files section in pfSense" renderer="lqip-webp" >}}
+
+Then, download the 3 files, including the ```auth-request.lua``` by issuing the following commands.
+
+{{< highlight bash >}}
+curl https://raw.githubusercontent.com/rxi/json.lua/refs/heads/master/json.lua > /usr/local/share/lua/5.3/json.lua
+
+curl https://raw.githubusercontent.com/haproxytech/haproxy-lua-http/refs/heads/master/http.lua > /usr/local/share/lua/5.3/haproxy-lua-http.lua
+
+curl https://raw.githubusercontent.com/TimWolla/haproxy-auth-request/refs/heads/main/auth-request.lua > /usr/local/share/lua/5.3/auth-request.lua
+{{< /highlight >}}
+
+After downloading these files, navigate to HAProxy -> Settings -> Global Advance Passthrough and under custom options paste ```lua-prepend-path /usr/local/share/lua/5.3/haproxy-lua-http.lua```. Click on save.
+
+## Configuring the Backend 
+
+On the backend you want to protect, configure the following Access Control Lists.
+
+| Name                | Expression  | Value                                                |
+|---------------------|-------------|------------------------------------------------------|
+| remote_user_exist   | Custom acl: | var(req.auth_response_header.remote_user) -m found   |
+| remote_groups_exist | Custom acl: | var(req.auth_response_header.remote_groups) -m found |
+| remote_name_exist   | Custom acl: | var(req.auth_response_header.remote_name) -m found   |
+| remote_email_exist  | Custom acl: | var(req.auth_response_header.remote_email) -m found  |
+
+
+As well as the following Actions.
+
+| Action                  | Name          | fmt                                              | Condition acl names |
+|-------------------------|---------------|--------------------------------------------------|---------------------|
+| http-request set-header | Remote-User   | %[ var(req.auth_response_header.remote_user) ]   | remote_user_exist   |
+| http-request set-header | Remote-Groups | %[ var(req.auth_response_header.remote_groups) ] | remote_groups_exist |
+| http-request set-header | Remote-Name   | %[ var(req.auth_response_header.remote_name) ]   | remote_name_exist   |
+| http-request set-header | Remote-Email  | %[ var(req.auth_response_header.remote_email) ]  | remote_email_exist  |
+
+It should look something like the following image.
+
+{{< lazyimg img="images/haproxy_backend_authelia.webp"  alt="HAProxy backend with Authelia ACL and Actions on pfSense" renderer="lqip-webp" >}}
+
+## Configuring the Frontend
+
+Configure your frontend like you usually would, adding the appropriate ACLs and actions. Then, add one more ACL as follows.
+
+| Name                | Expression   | Value |
+|---------------------|--------------|-------|
+| protected-frontends | Host matches | host  |
+
+If you have more than one host, replace the expression with Host regex using a value like ```^(app1|app2|app3)\.mydomain\.com$```
+
+In the Actions section, add the following. 
+
+| Action | customaction                                  | Condition acl names |
+|--------|-----------------------------------------------|---------------------|
+| Custom | http-request set-var(req.scheme) str(https)   | { ssl_fc }          |
+| Custom | http-request set-var(req.scheme) str(http)    | !{ ssl_fc }         |
+| Custom | http-request set-var(req.questionmark) str(?) | { query -m found }  |
+| Custom | http-request lua.auth-intercept <authelia backend>_ipvANY /api/authz/forward-auth HEAD * remote-user,remote-groups,remote-name,remote-email - | protected-frontends  |
+
+Remember to change <authelia backend> with your Authelia backend name. The suffix ipvANY is necessary as HAProxy in pfSense adds the _ipvANY bit to the name when generating the configuration file. For example, if your Authelia backend is named "authelia", use: authelia_ipvANY
+
+| Action                  | Name               | fmt                                           | Condition acl names |
+|-------------------------|--------------------|-----------------------------------------------|---------------------|
+| http-request header set | X-Real-IP          | %[ src ]                                      | protected-frontends |
+| http-request header set | X-Forwarded-Method | %[ var(req.method) ]                          | protected-frontends |
+| http-request header set | X-Forwarded-Proto  | %[ var(req.scheme) ]                          | protected-frontends |
+| http-request header set | X-Forwarded-Host   | %[ req.hdr(Host) ]                            | protected-frontends |
+| http-request header set | X-Forwarded-Uri    | %[ path ]%[ var(req.questionmark) ]%[ query ] | protected-frontends |
+
+| Action                | Rule                                        | Condition acl names                                                 |
+|-----------------------|---------------------------------------------|---------------------------------------------------------------------|
+| http-request redirect | location %[var(txn.auth_response_location)] | protected-frontends  !{ var(txn.auth_response_successful) -m bool } |
+
+| Action            | Condition acl names                                                                                           |
+|-------------------|---------------------------------------------------------------------------------------------------------------|
+| http-request deny | protected-frontends !{ var(txn.auth_response_successful) -m bool } { var(txn.auth_response_code) -m int 403 } |
+
+The order of rules and actions does not really matter, as they will be re-arranged when the configuration file is auto-generated. It should look something like the following images.
+
+{{< lazyimg img="images/haproxy_frontend1_authelia.webp" alt="HAProxy frontend1 with Authelia ACL and Actions on pfSense" renderer="lqip-webp" >}}
+
+{{< lazyimg img="images/haproxy_frontend2_authelia.webp" alt="HAProxy frontend2 with Authelia ACL and Actions on pfSense" renderer="lqip-webp" >}}
+
+## Done!
+
+After applying these settings, saving and restarting the HAProxy service, your applications should be protected by Authelia.
+
+## Resources
+
+Thanks to these resources for useful information.
+
+- <a href="https://www.authelia.com/integration/proxies/haproxy/" target="_blank">Authelia's HAProxy guide</a>
+- <a href="https://github.com/authelia/authelia/issues/2696" target="_blank">schklom's HAProxy guide</a>
+
+
+# File: ./pfsense_haproxy_authelia/index.es.md
+
+---
+title: "Connect Fail2Ban with pfSense"
+date: 2025-08-03
+draft: true
+author: "Kovasky Buezo"
+tags:
+  - Apache
+  - Fail2Ban
+  - Linux
+  - pfSense
+image: images/pfsense_alias.webp
+description: "pfSense Fail2Ban url alias."
+---
+# File: ./no_consent/index.md
+
+---
+title: "Enable implicit consent for clients using Authelia OIDC"
+date: 2024-06-02
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - Authelia
+  - Linux
+  - OIDC
+image: images/consent_form.webp
+description: "Remove the consent page for OIDC clients by enabling implicit consent in Authelia."
+---
+
+## Intro
+
+Enabling SSO for all self-hosted services that support it has been one of the best decisions in my homelab. It has created a seamless "ecosystem" experience for my friends and family (mainly myself 🥲). The problem is that every time I logged in to my services, it prompted me with a consent form which I quickly grew tired of. To remove this consent page in all my connected OIDC clients, I enabled implicit consent.
+
+## Client Configuration
+
+A typical client configuration may look like:
+{{< highlight yaml >}}
+
+identity_providers:
+  oidc:
+    issuer_private_key: |
+      <private_key>
+    clients:
+     - id: <id>
+      description: <description>
+      secret: '<secret>'
+      public: false
+      authorization_policy: two_factor
+      redirect_uris:
+        - <redirect_url>
+      scopes:
+        - openid
+        - email
+        - profile
+      userinfo_signing_algorithm: none
+{{< /highlight >}}
+
+To enable implicit consent, you just have to add one line to the client config, like this:
+
+{{< highlight yaml >}}
+
+identity_providers:
+  oidc:
+    issuer_private_key: |
+      <private_key>
+    clients:
+     - id: <id>
+      description: <description>
+      secret: '<secret>'
+      public: false
+      authorization_policy: two_factor
+      redirect_uris:
+        - <redirect_url>
+      scopes:
+        - openid
+        - email
+        - profile
+      userinfo_signing_algorithm: none
+      consent_mode: implicit
+{{< /highlight >}}
+
+## Done!
+
+After restarting Authelia, you will no longer be prompted to provide consent.
+
+# File: ./pfsense_fail2ban/index.md
+
+---
+title: "Connect Fail2Ban with pfSense"
+date: 2025-08-03
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - Apache
+  - Fail2Ban
+  - Linux
+  - pfSense
+image: images/pfsense_alias.webp
+description: "pfSense Fail2Ban url alias."
+---
+
+## Intro
+
+Some of my self-hosted services don't play nicely with Cloudflare proxying. This has led me to use DNS and forgo Cloudflare's protection. Many of the guides out there require pfBlockerNG or the use of scripts that authenticate to pfSense via SSH. This guide will help you integrate Fail2Ban with pfSense using only alias lists.
+
+## Serving the banlist
+
+You need a web server configured to serve a txt file. There are multiple ways you can achieve this but in this case, we'll install an Apache server on a Debian-based Docker host.
+
+To do that, you start with the following command: `sudo apt-get update && sudo apt-get install apache2`
+
+Then, modify the default site at `/etc/apache2/sites-available/000-default.conf` and replace its contents with the following.
+
+{{< highlight bash >}}
+<VirtualHost *:80>
+    ServerName banlist.local
+    DocumentRoot /var/www/html
+
+    <Directory "/var/www/html">
+        Options Indexes FollowSymLinks
+        AllowOverride None
+        Require all granted
+
+        <Files "*.txt">
+            ForceType text/plain
+            Header set Content-Type "text/plain; charset=utf-8"
+        </Files>
+    </Directory>
+
+    <Location "/banlist.txt">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </Location>
+
+    <Location "/">
+        # Only allow GET requests
+        <LimitExcept GET>
+            Require all denied
+        </LimitExcept>
+    </Location>
+</VirtualHost>
+{{< /highlight >}}
+
+Afterward, create an empty banlist.txt file, `touch /var/www/html/banlist.txt` and add the appropriate permissions by running `chown www-data:www-data /var/www/html/banlist.txt`. Finally, restart the server with `sudo systemctl reload apache2`. 
+
+If you navigate to `http://<your-host>:80/banlist.txt`, you should get an empty file.
+
+## Adding the Fail2Ban Action
+
+First, make sure that your Fail2Ban instance has access to the banlist. You can achieve this by adding the volume entry, `- /var/www/html/banlist.txt:/data/banlists.d/banlist.txt`. This maps the banlist.txt file found on the host to `/data/banlists.d/banlist.txt` in the Fail2Ban container. 
+
+Then, inside `actions.d`, create and edit a new configuration file, like `banlist.conf`. Copy the following contents into it.
+
+{{< highlight bash >}}
+[Definition]
+actionstart = touch /data/banlists.d/banlist.txt
+actionstop = 
+actioncheck = 
+actionban = if ! grep -q "<ip>" /data/banlists.d/banlist.txt; then echo "<ip>" >> /data/banlists.d/banlist.txt; fi
+actionunban = sed -i '/^<ip>$/d' /data/banlists.d/banlist.txt
+{{< /highlight >}}
+
+Then modify `jail.d/jail.local` and add the banlist action under the `[DEFAULT]` section. It should look something like:
+
+{{< highlight bash >}}
+[DEFAULT]
+ignoreip = 10.0.0.0/8, 192.168.0.0/16, 127.0.0.1, 172.0.0.0/8
+action = cloudflare
+         banlist
+{{< /highlight >}}
+
+Finally, restart your container for the changes to take effect.
+
+## Adding the Alias in pfSense
+
+In your pfSense web interface, navigate to Firewall->Aliases and click on Add. In the Properties section, enter a name like "Fail2Ban", make sure the Type is set to URL Table (IPs). In the URL Table (IPs) section add the host URL, make sure the netmask is set to 128, and optionally add a meaningful description. The end result should look similar to this blog's cover picture. 
+
+## Adding the update script
+
+By default, aliases are updated every 24 hours. This is not particularly useful for something like a blocklist, as we want the changes to propagate as fast as possible. To update the alias list on demand, you need to add a script in your pfSense machine. You can create a file under `/usr/local/sbin/update_fail2ban_list.sh` and give it the appropriate permissions by running `chmod +x /usr/local/sbin/update_fail2ban_list.sh`.
+
+Paste the following contents in there.
+
+{{< highlight bash >}}
+/usr/bin/touch -t 1001031305 /var/db/aliastables/Fail2Ban.txt
+/usr/bin/nice -n20 /etc/rc.update_urltables now forceupdate
+{{< /highlight >}}
+
+You can test this by adding an IP entry to the ban list, checking the alias in pfSense to confirm it hasn't appeared yet, executing the script, and finally checking the alias list again to verify the IP is now present.
+
+To make sure the list is updated constantly, add a cron job under Services->Cron, matching the configuration as shown in the picture below.
+
+{{< lazyimg img="images/pfsense_cron_task.webp" maxSize="640x" alt="pfSense cron job to update alias list" renderer="lqip-webp" >}}
+
+## Adding the firewall rule
+
+To tie it all together, you need a rule that will read the alias list and block traffic coming from any of the IPs listed there. Navigate to Firewall->Rules and click on Add with the arrow pointing up. Make sure the Action is Block, Interface set to WAN, Address Family set to IPv4, Protocol set to Any, Source set to Address or Alias list with the Fail2Ban alias. Leave everything else as default and click on Save. 
+
+The settings should look like:
+
+{{< lazyimg img="images/pfsense_alias_rule_settings.webp" maxSize="640x" alt="pfSense Fail2Ban alias list rule settings" renderer="lqip-webp" >}}
+
+The Firewall Rules page should look like:
+
+{{< lazyimg img="images/pfsense_alias_rule.webp" maxSize="640x" alt="pfSense Fail2Ban alias list rule" renderer="lqip-webp" >}}
+
+## Done!
+
+Next time Fail2Ban detects an unwanted IP and adds it to the blocklist, pfSense will block traffic to it within 1 minute.
+
+# File: ./pfsense_fail2ban/index.es.md
+
+---
+title: "Connect Fail2Ban with pfSense"
+date: 2025-08-03
+draft: true
+author: "Kovasky Buezo"
+tags:
+  - Apache
+  - Fail2Ban
+  - Linux
+  - pfSense
+image: images/pfsense_alias.webp
+description: "pfSense Fail2Ban url alias."
+---
+# File: ./ad_trust_ssh/index.md
+
+---
+title: "Set up centralized SSH key storage for external Active Directory users in FreeIPA (including FIDO2 hardware keys)"
+date: 2025-02-03
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - FreeIPA
+  - Active Directory
+  - AD
+  - cross-domain trust
+  - Linux
+  - FreeIPA
+  - FIDO
+image: images/profile_key_added.webp
+description: "Set up centralized SSH key storage for external Active Directory users in FreeIPA (including FIDO2 hardware keys)."
+---
+
+## Intro
+
+I was tired of entering my password every time I SSH'd to my VMs, but setting up SSH keys would mean manually copying my public key to each host I wanted to connect to. I then read about one key feature of FreeIPA, which is serving as a centralized key repository.
+
+This posed another problem: I don’t have any users in FreeIPA, as I mainly use my AD credentials (FreeIPA is one way only, and many services interact directly with Active Directory). Here’s how I generated and stored my AD user’s public key in FreeIPA, which allows me to remote into any enrolled device without manually distributing the keys.
+
+## Pre-requisite
+
+To store public keys for AD users, an external trust must be configured. You can check out my instructions to configure that [here](https://kovasky.me/blogs/ad_trust).
+
+## Creating the key pair
+
+To start the key pair generation, you can issue the following command:
+
+{{< highlight bash >}}
+ssh-keygen -o
+{{< /highlight >}}
+
+This will prompt you if you want to change the default file name, `~/.ssh/id_rsa`, and if you want to add a passphrase. If you choose the defaults, the public key will be located at `~/.ssh/id_rsa.pub`. 
+
+Alternatively, for added security, you can use a hardware key (like a Yubikey or, in my case, a Thetis). After plugging in your key, you can issue the following command:
+
+{{< highlight bash >}}
+ssh-keygen -t ecdsa-sk -f ~/.ssh/id_ecdsa_sk -C "user@domain"
+{{< /highlight >}}
+
+This will create an ecdsa-sk key and store the private key in your FIDO authenticator. The `-C` option is used to specify a comment, typically the username associated with the key. Your public key will be located at `~/.ssh/id_ecdsa_sk.pub`. It is highly recommended to have a secondary hardware key kept in a secure place, in case your main one gets misplaced. 
+
+After you've created your key pair, do a `cat ~/.ssh/<key>.pub` and copy the output. This text will be copied into FreeIPA in the next section. 
+
+## Adding the SSH key to FreeIPA
+
+Log in to the web portal of your FreeIPA instance as an administrator. Navigate to Identity -> ID Views -> Default Trust View. 
+
+{{< lazyimg img="images/default_trust_view.webp" maxSize="640x" alt="FreeIPA Default Trust View" renderer="lqip-webp" >}}
+
+Here, you will click Add and fill out your `username@domain` as well as paste the previously copied key into the SSH public key field. Then click on Add. This will create your user entry.
+
+{{< lazyimg img="images/adding_key.webp" maxSize="640x" alt="Adding an external user and a public key to FreeIPA" renderer="lqip-webp" >}}
+
+Click on the user; it should look something like this:
+
+{{< lazyimg img="images/key_added.webp" maxSize="640x" alt="FreeIPA user profile after adding a public SSH key" renderer="lqip-webp" >}}
+
+## Testing out the connection
+
+Now, all that is left to do is to open a terminal and SSH to your FreeIPA-enrolled host as your user. If you use a hardware key, it will prompt you to press the button in your security key; otherwise, it will just log in automatically.
+# File: ./proxmox_ntfy/index.md
+
+---
+title: "Set up scheduled SMART tests on Proxmox and send alerts via push notifications to your mobile phone"
+date: 2025-01-14
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - Proxmox
+  - ntfy.sh
+  - smartmontools
+  - smartd
+image: images/ntfy_app.webp
+description: "Set up scheduled SMART tests on Proxmox and send alerts via push notifications to your mobile phone with ntfy.sh."
+---
+
+## Intro
+
+My Synology NAS sends weekly (quick tests) and monthly (extended tests) health reports of its hard drives to my email. I wanted to add this functionality to my Proxmox server to keep an eye on my drives. After some trial and error, I successfully achieved this functionality. Now, I receive these notifications on my phone with the help of ntfy.sh. Here are the steps I took to make it work.
+
+## Pre-requisites
+
+For this setup to work, you should have a running instance of ntfy.sh. You can find the installation instructions [here](https://docs.ntfy.sh/install/).
+
+My compose file looks something like this:
+
+{{< highlight yaml >}}
+services:
+  ntfy:
+    image: binwiederhier/ntfy:latest
+    container_name: ntfy
+    command:
+      - serve
+    restart: unless-stopped
+    ports:
+      - 3780:80
+      - 25:25
+    environment:
+      TZ: Canada/Toronto
+      NTFY_BASE_URL: https://ntfy.<domain>
+      NTFY_UPSTREAM_BASE_URL: https://ntfy.sh
+      NTFY_CACHE_FILE: /var/lib/ntfy/cache.db
+      NTFY_AUTH_FILE: /var/lib/ntfy/auth.db
+      NTFY_AUTH_DEFAULT_ACCESS: deny-all
+      NTFY_BEHIND_PROXY: true
+      NTFY_ATTACHMENT_CACHE_DIR: /var/lib/ntfy/attachments
+      NTFY_ENABLE_LOGIN: true
+      NTFY_SMTP_SERVER_LISTEN: :25
+      NTFY_SMTP_SERVER_DOMAIN: <domain>
+    volumes:
+      - lib:/var/lib/ntfy
+      - cache:/var/cache/ntfy
+      - etc:/etc/ntfy
+
+volumes:
+  lib:
+    driver: local
+  cache:
+    driver: local
+  etc:
+    driver: local
+{{< /highlight >}}
+
+You will need a topic to which you can subscribe and an API token. Make sure to keep them handy, as they will be needed when configuring notifications in Proxmox.
+
+## Configuring Postfix
+
+Proxmox can dispatch notifications straight to email. To make use of it, you would be required to use a dedicated email account from a provider like Google, use third party services like smtp2go, or even set up your own mail server. 
+
+Luckily, Proxmox comes with Postfix, a mail transfer agent, pre-installed. We can configure Postfix to forward emails to ntfy.sh, where emails will be processed and pushed to your mobile devices. To do this, you need to modify the configuration file `/etc/postfix/main.cf`.
+
+Locate the line with `relayhost =`, or if it doesn't exist, insert it at the end of the file and specify the ntfy.sh host with its SMTP port. It should look something like:
+
+{{< highlight bash >}}
+relayhost = <ntfy.sh IP or Hostname>:<SMTP PORT>
+{{< /highlight >}}
+
+When the changes are made, you can restart it by issuing the command `systemctl restart postfix`. Now all emails coming from Proxmox will use ntfy.sh as their server.
+
+## Configuring smartd
+
+Proxmox comes with smartmontools pre-installed. This package contains the smartd utility which you'll use for monitoring and reporting on the health of your installed drives. The configuration file is located at `/etc/smartd.conf`. You can read about smartd and its directives [here](https://linux.die.net/man/5/smartd.conf).
+
+You can either list your drives one by one or let smartd detect them by using the DEVICESCAN directive. My file looks something like: 
+
+{{< highlight bash >}}
+DEVICESCAN -H -f -u -p -l error -l selftest -n standby,24,q \
+-I 194 \
+-I 190 \
+-W 5,55,60 \
+-i 9 \
+-R 5! \
+-C 197 \
+-U 198 \
+-o on -S on -s (S/../../../02|L/../01/./04) \
+-m <topic>+<key>@<domain> \
+-M test \
+-M exec /usr/share/smartmontools/smartd-runner
+{{< /highlight >}}
+
+The most important lines are:
+
+{{< highlight bash >}}
+-o on -S on -s (S/../../../02|L/../01/./04) \
+-m <topic>+<key>@<domain>
+{{< /highlight >}}
+
+The `-o` line tells smartd to run short tests every day at 2 am and an extended test on the first day of every month at 4 am. The `-m` line tells smartd to send notifications to an email. This email address must follow the format: the topic you created in the pre-requisite step + the token @ the domain you assigned to ntfy.sh.
+
+## Done!
+
+Proxmox will now send SMART notifications to your ntfy.sh server, which will then forward them to your phone. 
+
+Note: Since you've configured your ntfy.sh server as your relay server, other notifications, such as those from backup tasks, will also be sent to ntfy.sh and pushed to your phone when configured with the appropriate topic+token@domain.
+
+# File: ./cloudflare_fail2ban/index.md
+
+---
+title: "Using Fail2Ban with Cloudflare on a free account"
+date: 2024-03-25
+explicitLastMod: 2024-05-17
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - Cloudflare
+  - Fail2Ban
+  - Docker
+  - Linux
+image: images/cloudflare_fail2ban_logs.webp
+description: "Using Fail2Ban with Cloudflare on a free account to block IPs"
+---
+
+## Intro
+
+To better protect my web accessible services, I decided to use Fail2Ban in conjunction with Cloudflare's WAF to block IPs with more than 3 failed login attempts. I already leverage Cloudflare's CDN and geo-blocking capabilities on my homelab, so I opted to utilize their WAF to block access to potential attackers. 
+
+On the free tier, the WAF is limited to 5 rules, which can easily reach their limit. A workaround is to create a rule that uses a blocklist and then with the Lists API, update it as required.
+
+## Creating an API key
+
+Log in to Cloudflare and navigate to My Profile -> API Tokens-> Create a Token-> Create a Custom Token. Give your token a name and make sure the permissions are as follows:
+
+{{< lazyimg img="images/cloudflare_token.webp" maxSize="640x" alt="cloudflare token" renderer="lqip-webp" >}}
+
+Keep this token handy as it will be used later.
+
+## Creating a list
+
+Log in to Cloudflare, navigate to Manage Account -> Configurations -> Lists. Under Lists, create a new list with type IP and name it "block_list." It should look something like:
+
+{{< lazyimg img="images/cloudflare_list.webp" maxSize="640x" alt="block_list" renderer="lqip-webp" >}}
+
+Make sure to write down your user id plus the id of this list. You can get it by clicking edit and taking a look at the url. It should look something like:
+
+{{< highlight bash >}}
+https://dash.cloudflare.com/<user id>/configurations/lists/<list id>
+{{< /highlight >}}
+
+## Modifying the list
+
+To modify the list, I made a small python script which uses some of the details that were recorded before.
+
+{{< highlight python >}}
+#!/usr/bin/python3
+
+""" 
+Called by entryPoint.py, performs the addition or deletion of an item in a Cloudflare custom list.
+Support for IPV6 is limited as it blocks the entire /64 subnet.
+"""
+
+import sys
+import requests
+from requests import Response
+import json
+import ipaddress
+
+def getIPList(apiEndpoint : str, headers : dict) -> json:
+    response = requests.get(apiEndpoint, headers=headers)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print(f"Failed to fetch existing IP list. Status code: {response.status_code}")
+        print(response.text)
+        sys.exit(1)
+
+def addIPtoList(ipAddr : str, apiEndpoint : str, headers : dict) -> Response:
+    payload = [{"ip": ipAddr}]
+    response = requests.post(apiEndpoint, headers=headers, data=json.dumps(payload))
+    return response
+
+def removeIPFromList(ipId : str, apiEndpoint : str, headers : dict) -> Response:
+    payload = {"items": [{"id": ipId}]}
+    response = requests.delete(apiEndpoint, headers=headers, data=json.dumps(payload))
+    return response
+
+if __name__ == "__main__":
+    if len(sys.argv) < 3:
+        print("Usage: ./modifyBanList.py <ip> <add|del>")
+        sys.exit(1)
+
+    ipAddr = sys.argv[1]
+
+    try:
+        addr = ipaddress.IPv6Address(ipAddr)
+        first_64_bits = str(addr.exploded).split(':')[:4]
+        ipAddr = ':'.join(first_64_bits) + '::/64'
+    except:
+        pass
+
+    action = sys.argv[2]
+    listId = ''
+    accountId = ''
+    email = ''
+    apiKey = ''
+    apiEndpoint = f'https://api.cloudflare.com/client/v4/accounts/{accountId}/rules/lists/{listId}/items'
+
+    headers = {
+        'X-Auth-Email': f'{email}',
+        'X-Auth-Key': f'{apiKey}',
+        'Content-Type': 'application/json'
+    }
+
+    existingIpList = getIPList(apiEndpoint,headers)
+    print(existingIpList)
+    response = None
+
+    if action == "del":
+        ipId = None
+        for item in existingIpList['result']:
+            if item['ip'] == ipAddr:
+                ipId = item['id']
+                break
+        payload = {"items": [{"id": ipId}]}
+
+        if ipId is not None:
+            response = requests.delete(apiEndpoint,headers=headers,data=json.dumps(payload))
+    elif not any(item['ip'] == ipAddr for item in existingIpList['result']):
+        payload = [{
+            "ip": ipAddr
+        }]
+        response = requests.post(apiEndpoint, headers=headers, data=json.dumps(payload))
+
+    if response is not None and response.status_code == 200:
+            print(f"IP address {ipAddr} {action} to the custom IP list successfully.")
+    else:
+        print(f"Failed to {action} IP address {ipAddr} to the custom IP list.")
+{{< /highlight >}}
+
+This should add or remove any desired IP from the block list.
+
+## Entry Point
+
+My Fail2Ban instance is a container which luckily enough has python. To make sure the script has all required dependencies, I made an entrypoint which then calls the previous script.
+
+{{< highlight python >}}
+#!/usr/bin/python3
+
+""" 
+Creates a virtual environment, installs dependencies, and then calls modifyBanList.py
+"""
+
+import os
+import sys
+
+if len(sys.argv) < 3:
+    print("Usage: ./entryPoint.py <ip> <add|del>")
+    sys.exit(1)
+
+venv_dir = 'env'
+
+if not os.path.exists(venv_dir):
+    os.system(f"{sys.executable} -m venv {venv_dir}")
+
+os.system(f"{os.path.join(venv_dir, 'bin', 'pip')} install --upgrade requests ipaddress")
+os.system(f"{os.path.join(venv_dir, 'bin', 'python')} /data/action.d/modifyBanList.py {sys.argv[1]} {sys.argv[2]}")
+
+{{< /highlight >}}
+
+## Cloudflare.conf
+
+To glue all of it together, a conf file will tell Fail2Ban how to call the script when a ban or unban action needs to take place.
+
+{{< highlight bash >}}
+[Definition]
+actionban = /data/action.d/entryPoint.py <ip> add
+actionunban = /data/action.d/entryPoint.py <ip> del
+{{< /highlight >}}
+
+## Jail.d
+
+In my config, I am directly using the jail.local and it looks something like:
+
+{{< highlight bash >}}
+
+[DEFAULT]
+action = cloudflare
+
+{{< /highlight >}}
+
+## Done!
+
+Some next steps are to configure a filter, add it to the jail, and later use a VPN to generate some unsuccesful events. Once the ban takes place, it may take a few seconds to propapage on Cloudflare.
+
+You can take a look at these scripts [here](https://git.agrajag.cloud/kova/homelabscripts).
+# File: ./synology_scrutiny/index.md
+
+---
+title: "Install the scrutiny collector in a Synology NAS to view historical trends in your drives' health"
+date: 2025-01-25
+explicitLastMod: 2025-02-03
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - Synology
+  - SMART
+  - smartd
+  - scrutiny
+image: images/scrutiny.webp
+description: "Install the scrutiny collector in a Synology NAS to view historical trends in your drives' health."
+---
+
+## Intro
+
+I set up scrutiny to monitor the drives in my Proxmox host. I like having access to all the SMART data in my drives in one single spot, so I decided to include my NAS' drives as well. This is how I did it.
+
+## Pre-requisites
+
+Scrutiny depends on smartctl v7+ which, unfortunately, my NAS did not have. To check the version of smartctl that your NAS has installed, SSH into it and issue the command `/usr/bin/smartctl -i`. If your smartctl version is lower than 7, you will need to install Entware. For instructions to do so, please visit this [link](https://github.com/Entware/Entware/wiki/Install-on-Synology-NAS).
+
+## Installing an updated version of smartctl
+
+To install an updated version of smartctl, SSH into your NAS and as root execute the command `opkg install smartmontools`. After this, you will find smartctl under `/opt/sbin/smartctl`. You can call it with the -i flag to make sure the version installed is at least 7.
+
+## Downloading the collector
+
+To download the latest binary, you can head over [here](https://github.com/AnalogJ/scrutiny/releases/) and copy the link for the appropriate architecture. To find your architecture, you can issue the command `uname -m`. 
+
+After copying the link, SSH back into your NAS. Create the appropriate folder structure, like `/opt/scrutiny/bin`. Keep in mind that if you have not installed Entware, your `/opt` directory may get overwritten with future system updates. Now, cd into the newly created directory and issue the command `wget <binary link>`. After its downloaded, you should give it the appropraite permissions by executing `chmod +x <binary>`. You may need to issue these commands as root.
+
+## Configuration file
+
+You will need to create a configuration file, `collector.yaml`, inside `/opt/scrutiny/config`. This is to replace which smartctl binary will be used, as the one shipped with DSM lives under `/sbin` and the one installed by Entware is under `/opt`. You can take a look at all the configuraiton options in the example configuration [here](https://github.com/AnalogJ/scrutiny/blob/master/example.collector.yaml). My configuration looks like:
+
+{{< highlight bash >}}
+version: 1
+host:
+  id: "nas"
+
+api:
+ endpoint: 'http://<master ip>:<port>'
+
+commands:
+  metrics_smartctl_bin: '/opt/sbin/smartctl'
+{{< /highlight >}}
+
+You can test your configuration by executing the command `/opt/scrutiny/bin/<collector binary> run --config /opt/scrutiny/config/collector.yaml`. If everything was set up correctly, your device should appear in the scrutiny dashboard.
+
+## Setting up the scheduled task
+
+Enter the WEB GUI and navigate to Control Panel -> Task Scheduler. In here select Create -> Scheduled Task -> User-defined script. Under General, name it something like "scrutiny" and make sure enabled is checked. Under Schedule, make sure its run daily and its run every 15 minutes. Under task settings, paste the following in the command textbox. 
+
+{{< highlight bash >}}
+#!/bin/sh
+. /opt/etc/profile; /opt/scrutiny/bin/<collector binary> run --config /opt/scrutiny/config/collector.yaml
+{{< /highlight >}}
+
+Your settings should look like:
+
+{{< lazyimg img="images/task1.webp" maxSize="640x" alt="General settings of a scheduled task in Synology DSM" renderer="lqip-webp" >}}
+{{< lazyimg img="images/task2.webp" maxSize="640x" alt="Schedule settings of a scheduled task in Synology DSM" renderer="lqip-webp" >}}
+{{< lazyimg img="images/task3.webp" maxSize="640x" alt="Task settings of a scheduled task in Synology DSM" renderer="lqip-webp" >}}
+
+## Done!
+
+Once everything is set up, the collector installed in your NAS will update your server with smart data every 15 minutes.
+# File: ./disk_passthrough/index.md
+
+---
+title: "Disk passthrough for vms in Proxmox"
+date: 2024-04-04
+explicitLastMod: 2024-05-17
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - Proxmox
+  - Linux
+  - Passthrough
+  - TrueNas
+image: images/truenas_disk.webp
+description: "Disk passthrough for vms in Proxmox."
+---
+
+## Intro
+
+It has always been recommended to give ZFS full disk control, so after placing my raid card in HBA mode, I went ahead and gave full disk control to my TrueNAS vm.
+
+## Figuring out the id of the disk
+
+Typically, disks are labeled as /dev/sdX, but this can change when adding other drives or moving them around. To circumvent this, it is better to figure out the specific id of the disk to be passed through. To do this, execute the following:
+
+{{< highlight bash >}}
+lshw -class disk -class storage
+{{< /highlight >}}
+
+Write down the serial and then issue the following command:
+
+{{< highlight bash >}}
+ls /dev/disk/by-id/ | grep <serial>
+{{< /highlight >}}
+
+Write this down, as it will be needed for the passthrough.
+
+## Map the drive to the vm
+
+After you've found the id of the disk, you can issue the following command:
+
+{{< highlight bash >}}
+qm set <vm_id> -scsi<disk_number> /dev/disk/by-id/<disk_id>
+{{< /highlight >}}
+
+Navigate to /etc/pve/qemu-server. Locate your vm configuration by vm id and open the file for edition. 
+
+It should look something like:
+
+{{< highlight bash >}}
+...
+scsi<disk_number>: /dev/disk/by-id/<disk_id>,size=<disk_size>
+...
+{{< /highlight >}}
+
+If left untouched and multiple disks are passed through, TrueNAS will complain about duplicate serials. To fix this, you have to add the serial option. It should now look like:
+
+{{< highlight bash >}}
+...
+scsi<disk_number>: /dev/disk/by-id/<disk_id>,serial=<serial>,size=<disk_size>
+...
+{{< /highlight >}}
+
+This will now passthrough the disk with a unique serial.
+
+## Done!
+
+Reboot the vm and the disk should appear. 
+
+# File: ./pfsense_wan_update/index.md
+
+---
+title: "Automatically renew WAN lease on pfSense without rebooting"
+date: 2024-12-10
+draft: false
+author: "Kovasky Buezo"
+tags:
+ - pfSense
+image: images/pfsense_cron.webp
+description: "Automatically renew WAN lease on pfSense without rebooting."
+---
+
+## Intro
+
+Every now and again I would wake up to my internet being down while my local network being fine. This usually happened when my ISP renewed my assigned IP overnight. The only solution was to reboot my pfSense VM to force the IP lease renewal. Searching the web I discovered it was not uncommon for people to experience this with certain types of modems and virtualized pfSense instances. Here's how I resolved it in my homelab.
+
+## WAN renew script 
+
+In your pfSense instance, create a file named wan_renew.sh in /usr/local/sbin with the contents below and make it executable. This script pings two external IPs, and if 50% of them fail, it renews the lease on the WAN interface:
+
+{{< highlight bash >}}
+#!/bin/sh
+
+IP1="8.8.8.8"
+IP2="1.1.1.1"
+
+LOGFILE="/var/log/wan_renew.log"
+
+ping_test() {
+    local ip=$1
+    local count=$(ping -c 4 $ip | awk -F', ' '/received/ {print $2}' | awk '{print $1}')
+    if [ $count -lt 3 ]; then
+        return 1
+    else
+        return 0
+    fi
+}
+
+if ! ping_test $IP1 && ! ping_test $IP2; then
+    # Replace vtnet0 with your WAN interface
+    /usr/local/sbin/dhclient -4 -d -r -lf /var/db/dhclient.leases.vtnet0 -cf /var/etc/dhclient_wan.conf -sf /usr/local/sbin/pfSense-dhclient-script
+    php -r "require 'interfaces.inc'; interface_bring_down('wan'); interface_configure('wan');"
+
+    echo "$(date): Pings to $IP1 and $IP2 failed. Lease on wan vtnet0 has been renewed." >> $LOGFILE
+fi
+
+{{< /highlight >}}
+
+## Adding the script to the cron service
+
+Ensure the cron package installed. Navigate to Services->Cron and click on Add. Set the settings as shown in the cover picture at the top of this page. 
+
+## All done!
+
+After applying all settings, your WAN lease should be automatically renewed without having to restart your firewall.
+# File: ./whitelist/index.md
+
+---
+title: "Whitelisting in Suricata Package for pfSense"
+date: 2023-09-13
+explicitLastMod: 2024-11-16
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - pfSense
+  - Suricata
+image: images/suricata.webp
+description: "Add a dns whitelist for Suricata in pfSense."
+---
+
+## Intro
+
+After tirelessly looking for a solution in order to dynamically create a whitelist for Suricata based on DNS, I decided to create my own. 
+
+## Download the necessary files
+
+Create a whitelist file with all the domains you wish whitelisted. A useful starting point is [anudeepND's collection of commonly white listed domains](https://github.com/anudeepND/whitelist). After that, download my [generateRules.py](https://github.com/kovasky/homelabscripts/blob/main/pfSense/suricata/generateRules.py) script. 
+
+Place these files in a directory of your choice on your pfSense host. For simplicity, I just placed them in /root. Finally, make the script executable by ```chmod +x ./generateRules.py```.
+
+## Modifying suricata.inc
+
+Navigate to ```/usr/local/pkg/suricata/``` and using a text editor open ```suricata_defs.inc```. Make the following modifications:
+
+{{< highlight php >}}
+if (!defined("SURICATA_DEFAULT_RULES"))
+        define("SURICATA_DEFAULT_RULES", array( "whitelist.rules","app-layer-events.rules", 
+        "decoder-events.rules", "dhcp-events.rules", "dnp3-events.rules", 
+        "dns-events.rules", "files.rules", "http-events.rules", 
+        "http2-events.rules", "ipsec-events.rules", "kerberos-events.rules", 
+        "modbus-events.rules", "mqtt-events.rules", "nfs-events.rules", 
+        "ntp-events.rules", "smb-events.rules", "smtp-events.rules", 
+        "ssh-events.rules", "stream-events.rules", "tls-events.rules"));
+{{< /highlight >}}
+
+The first element in the array will be our generated ```whitelist.rules```. This file can be named as you wish and it will appear as so in the web gui.
+
+## Running the script
+
+Run the script with the path to the dns whitelist as well as where you want the output file. For example:
+
+{{< highlight bash >}}
+./generateRules.py /root/dns_list.txt /root/whitelist.rules
+{{< /highlight >}}
+
+Once the script has finished, you can copy/move it to ```/usr/local/share/suricata/rules/```. If you open the Suricata web gui and select your interface, the new ruleset should appear. If not, you can try running ```suricata-update``` in terminal.
+
+## Automating the generation of rules
+
+Since the IPs can change for any given domain, an easy way to update them would be to set up a cron job. Mine looks like this:
+
+{{< highlight bash >}}
+0 0 * * * /root/update_rules.py /root/dns_list.txt /root/whitelist.rules
+35 0 * * * mv /root/whitelist.rules /usr/local/share/suricata/rules/whitelist.rules && suricata-update
+{{< /highlight >}}
+
+## Done!
+
+After these steps are done, you are good to go and your domains will be whitelisted. 
+
+# File: ./intel_arc_no_rebar/index.md
+
+---
+title: "Intel Arc A380 performance benchmark with no Resizable BAR in a Dell Poweredge T440"
+date: 2025-03-10
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - dell
+  - intel
+  - vulkan
+  - intel arc
+  - arc
+  - rebar
+  - av1
+  - plex
+image: images/gpu_install_t440.webp
+description: "Intel Arc A380 with ReBar disabled on a Dell Poweredge T440."
+---
+
+## Intro
+
+I took a leap of faith by buying an Intel Alchemist series GPU, even after countless people online advised against purchasing one if the target system doesn't support Resizable BAR. Still, AV1 at this price point felt too compelling to pass up, even if it meant subpar graphical performance. My main intent was transcoding media, so I didn't think I would mind.
+
+I didn't expect much, but the Intel Arc A380 performed surprisingly well for my needs, showing results close to a GTX 1650. Best of all, converting my media to AV1 has already saved over 9TB of storage space (more than a 50% reduction in space usage).
+
+In this blog, I'll share my results.
+
+## System specs 
+
+The GPU is passed through to my Plex VM, which has the following configuration:
+
+- 16 cores, Xeon Gold 6126
+- 16GiB of RAM
+- Ubuntu 24.04.2
+- Kernel 6.8.0-54-generic
+- Mesa 25.0.0 (Kisak's PPA)
+- Vulkan 1.4.305
+
+It is worth noting that the host has 4G decoding enabled.
+
+## Graphics Performance
+
+I was originally planning to use Unigine benchmarking tools but quickly realized they lack of Vulkan support. I then turned to GravityMark, a very capable benchmarking tool with Vulkan support. There aren't many submissions to GravityMark, so these results should be taken with caution. Click <a href="https://gravitymark.tellusim.com/leaderboard/" target="_blank">here</a> to view the GravityMark leaderboard.
+
+OpenGL performance for this card is abysmal. I don't know if its due to my setup, but it is significantly worse than Vulkan. I did not find many relevant results from GravityMark, so I have only compared it against a GTX 1070. 
+
+{{< lazyimg img="images/opengl_graph.webp" maxSize="640x" alt="OpenGL performance comparison" renderer="lqip-webp" >}}
+
+Vulkan on the other hand, performed great. The Intel Arc A380 seems to sit between an AMD RX 580 and a GTX 1650 --not too bad. 
+
+{{< lazyimg img="images/vulkan_graph.webp" maxSize="640x" alt="Vulkan performance comparison" renderer="lqip-webp" >}}
+
+{{< lazyimg img="images/a380_gravitymark_opengl.webp" maxSize="940x" alt="Vulkan performance comparison" renderer="lqip-webp" >}}
+
+{{< lazyimg img="images/a380_gravitymark_vulkan.webp" maxSize="940x" alt="Vulkan performance comparison" renderer="lqip-webp" >}}
+
+## Transcoding Performance
+
+Transcoding using HandBrake with the QSV profile wasn't very performant. A 4K test movie averaged about 34FPS. 
+{{< lazyimg img="images/handbrake.webp" maxSize="640x" alt="Intel Arc A380 handbrake qsv performance" renderer="lqip-webp" >}}
+
+
+On the other hand, Plex transcoding performance was great. On avg, I achieved about 5x the speed on a 4K-to-4K conversion, 7x on a 4K-to-1080p conversion and 13x on a 1080p-to-1080p conversion. This leaves plenty of room for devices that can't yet play AV1 directly. The results are shown below.
+
+{{< lazyimg img="images/plex4k.webp" maxSize="640x" alt="Intel Arc A380 plex 4k to 4k performance" renderer="lqip-webp" >}}
+
+{{< lazyimg img="images/plex4k1080p.webp" maxSize="640x" alt="Intel Arc A380 plex 4k to 1080p performance" renderer="lqip-webp" >}}
+
+{{< lazyimg img="images/plex1080p.webp" maxSize="640x" alt="Intel Arc A380 plex 4k to 1080p performance" renderer="lqip-webp" >}}
+
+## AI Performance 
+
+For AI testing, I used an ollama version compiled with a Vulkan backend, built using <a href="/blogs/ollama_vulkan_intel/" target="_blank">this guide</a>. You can find my results below.
+
+The first prompt was a simple "hello". 
+
+{{< lazyimg img="images/ollama_hello.webp" maxSize="640x" alt="Intel Arc A380 ollama hello prompt" renderer="lqip-webp" >}}
+
+The second prompt was "write me a 300 word short story". 
+
+{{< lazyimg img="images/ollama_write.webp" maxSize="640x" alt="Intel Arc A380 ollama write prompt" renderer="lqip-webp" >}}
+
+For the third prompt, I pasted a different short story and asked it comprehension questions. 
+
+{{< lazyimg img="images/ollama_analyze.webp" maxSize="640x" alt="Intel Arc A380 ollama analyze prompt" renderer="lqip-webp" >}}
+
+## End
+
+The Intel Arc A380 hasn't disappointed me, even with ReBAR disabled. I'm also able to stream games through Sunshine and play at a comfortable framerate. I'd recommend anyone looking to get AV1 support at a reasonable price to still consider purchasing an Intel Arc GPU, even if your motherboard doesn't support ReBAR.
+
+Keep in mind that synthetic benchmarks rarely reflect real-world usage.
+# File: ./intel_arc_no_rebar/index.es.md
+
+---
+title: "Benchmark de rendimiento de la Intel Arc A380 sin Resizable BAR en un Dell Poweredge T440"
+date: 2025-03-10
+draft: false
+author: "Kovasky Buezo"
+tags:
+  - dell
+  - intel
+  - vulkan
+  - intel arc
+  - arc
+  - rebar
+  - av1
+  - plex
+image: images/gpu_install_t440.webp
+description: "Benchmark de rendimiento de la Intel Arc A380 sin Resizable BAR en un Dell Poweredge T440."
+---
+
+## Intro
+
+Me arriesgué al comprar una Gráfica Intel Alchemist, incluso después de que mucha gente en internet recomendara no hacerlo si mi sistema no soportaba la función Resizable BAR. Aún así, tener soporte para el códec AV1 a este precio era demasiado tentador para dejarlo pasar, aunque significara tener un pésimo rendimiento gráfico. De todos modos, mi intención principal era transcodificar vídeos, así que pensé que no me importaría demasiado.
+
+No esperaba mucho, pero la Intel Arc A380 rindió sorprendemente bien para mis necesidades, mostrando una potencia similar a la de una GTX 1650. Lo mejor de todo es que al convertir mis videos a AV1 ya he ahorrado más de 9TB de almacenamiento (más del 50% de reducción en uso de espacio).
+
+En este blog les compartiré mis resultados.
+
+## Especificaciones del sistema 
+
+La gráfica está en modo passthrough a mi máquina virtual de Plex, y tiene la siguiente configuración:
+
+- 16 núcleos, Xeon Gold 6126
+- 16GiB de RAM
+- Ubuntu 24.04.2
+- Kernel 6.8.0-54-generic
+- Mesa 25.0.0 (del PPA de Kisak)
+- Vulkan 1.4.305
+
+Vale mencionar que mi host tiene habilitado 4G decoding. 
+
+## Rendimiento Gráfico
+
+Originalmente planeaba usar las herramientas de benchmarking de Unigine, pero rápidamente me di cuenta que no contaba con soporte para Vulkan. Entonces recurrí a GravityMark, una herramienta de benchmarking muy capaz que sí soporta Vulkan. No hay muchas pruebas enviadas a GravityMark, así que estos resultados deben tomarse con precaución. Haz click [aquí](https://gravitymark.tellusim.com/leaderboard/) para ver la tabla de resultados de GravityMark.
+
+El rendimiento en OpenGL de esta tarjeta es pésimo. No sé si se debe a mi configuración, pero es significativamente peor que con Vulkan. No encontré muchos resultados relevantes en GravityMark, así que solo la comparé contra una GTX 1070. 
+
+{{< lazyimg img="images/opengl_graph.webp" maxSize="640x" alt="OpenGL performance comparison" renderer="lqip-webp" >}}
+
+Por otro lado, Vulkan rindió excelente. La Intel Arc A380 parece ubicarse entre una AMD RX 580 y una GTX 1650 — nada mal.
+
+{{< lazyimg img="images/vulkan_graph.webp" maxSize="640x" alt="Vulkan performance comparison" renderer="lqip-webp" >}}
+
+{{< lazyimg img="images/a380_gravitymark_opengl.webp" maxSize="940x" alt="Vulkan performance comparison" renderer="lqip-webp" >}}
+
+{{< lazyimg img="images/a380_gravitymark_vulkan.webp" maxSize="940x" alt="Vulkan performance comparison" renderer="lqip-webp" >}}
+
+## Rendimiento de Transcodificación
+
+La transcodificación usando HandBrake con el perfil QSV no fue muy buena. Una película de prueba en 4K promedió alrededor de 34 FPS.
+
+{{< lazyimg img="images/handbrake.webp" maxSize="640x" alt="Intel Arc A380 handbrake qsv performance" renderer="lqip-webp" >}}
+
+Por otro lado, el rendimiento de transcodificación en Plex fue excelente. En promedio, logré alrededor de 5x de velocidad en una conversión de 4K a 4K, 7x en una conversión de 4K a 1080p y 13x en una conversión de 1080p a 1080p. Esto deja bastante margen para dispositivos que aún no pueden reproducir AV1 directamente. Los resultados se muestran a continuación.
+
+{{< lazyimg img="images/plex4k.webp" maxSize="640x" alt="Intel Arc A380 plex 4k to 4k performance" renderer="lqip-webp" >}}
+
+{{< lazyimg img="images/plex4k1080p.webp" maxSize="640x" alt="Intel Arc A380 plex 4k to 1080p performance" renderer="lqip-webp" >}}
+
+{{< lazyimg img="images/plex1080p.webp" maxSize="640x" alt="Intel Arc A380 plex 4k to 1080p performance" renderer="lqip-webp" >}}
+
+## Rendimiento de IA
+
+Para las pruebas de IA, usé una versión de Ollama compilada con backend Vulkan, siguiendo <a href="/blogs/ollama_vulkan_intel/" target="_blank">esta guía</a>. Puedes ver mis resultados a continuación.
+
+El primer prompt fue un simple "hola".
+
+{{< lazyimg img="images/ollama_hello.webp" maxSize="640x" alt="Intel Arc A380 ollama hello prompt" renderer="lqip-webp" >}}
+
+El segundo prompt fue "escríbeme una historia corta de 300 palabras".
+{{< lazyimg img="images/ollama_write.webp" maxSize="640x" alt="Intel Arc A380 ollama hello prompt" renderer="lqip-webp" >}}
+
+Para el tercer prompt, pegué una historia corta distinta y le hice preguntas de comprensión.
+{{< lazyimg img="images/ollama_analyze.webp" maxSize="640x" alt="Intel Arc A380 ollama hello prompt" renderer="lqip-webp" >}}
+
+## Fin
+
+La Intel Arc A380 no me ha decepcionado, incluso con ReBAR deshabilitado. También puedo hacer streaming de juegos en tiempo real mediante Sunshine y jugar con un buen framerate. Recomendaría a cualquiera que busque soporte AV1 a un precio razonable que considere adquirir una GPU Intel Arc, incluso si su motherboard no soporta ReBAR.
+
+Ten en cuenta que los benchmarks sintéticos rara vez reflejan el uso en el mundo real.
+
+# File: ./pfsense_haproxy_timeout/index.md
+
+---
+title: "Build ollama with vulkan support to enable local inference on Intel Arc GPUs"
+date: 2025-02-21
+draft: true
+author: "Kovasky Buezo"
+tags:
+  - ollama
+  - vulkan
+  - intel arc
+  - ai
+image: images/ollama_service.webp
+description: "Build ollama with vulkan support to enable local inference on Intel Arc GPUs."
+---
+
+## Intro
+
+I have an Intel Arc A380 in my Dell T440 server for Plex and remote gaming through Sunshine. I set up [Hoarder](https://hoarder.app) and wanted a way to use the AI features without paying for OpenAI tokens. This proved extremely difficult, as none of the readily available solutions seemed to work.
+
+This was until I tried LMStudio. LMStudio worked out of the box, but launching it in a headless manner on boot is not possible (at least for me), not to mention the incompatibility of its OpenAPI implementation with Hoarder. I later learned that LMStudio uses a vulkan backend, and went on a quest to find an ollama version with vulkan support. 
+
+Ollama does not currently support Vulkan and it looks like it won't any time soon, (read about that [here](https://github.com/ollama/ollama/pull/5059#issuecomment-2629465081)) but there is an actively developed fork  by [@Whyvl](https://github.com/whyvl), [ollama-vulkan](https://github.com/whyvl/ollama-vulkan).
+
+Below are the steps needed to build and run ollama with a vulkan backend. 
+
+## Pre-requisites
+
+I used an Ubuntu 24.04 (Noble Numbat) host, so your mileage may vary under different distros.
+
+To install the required packages, issue the following commands:
+
+{{< highlight bash >}}
+sudo apt update
+sudo apt install git cmake wget libcap-dev golang-go 
+{{< /highlight >}}
+
+To install the vulkan-sdk, you need to run: 
+
+{{< highlight bash >}}
+wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
+sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-noble.list http://packages.lunarg.com/vulkan/lunarg-vulkan-noble.list
+sudo apt update
+sudo apt install vulkan-sdk
+{{< /highlight >}}
+
+You also need this file: <a href="https://github.com/user-attachments/files/18783263/0002-fix-fix-vulkan-building.patch" target="_blank">fix-vulkan-building.patch</a>. Save it somewhere easily accessible (like your downloads folder).
+
+## Setting up the repo
+
+Next, you need to set up the repositories and apply the patch you downloaded. Use:
+
+{{< highlight bash >}}
+git clone -b vulkan https://github.com/whyvl/ollama-vulkan.git
+cd ollama-vulkan
+
+git remote add ollama_vanilla https://github.com/ollama/ollama.git
+git fetch ollama_vanilla --tags
+
+# the latest release as of now is 0.5.11
+git checkout tags/v0.5.11 -b ollama_vanilla_stable
+git checkout vulkan
+
+git merge ollama_vanilla_stable --allow-unrelated-histories --no-edit
+
+patch -p1 -N < <path to patch file>
+{{< /highlight >}}
+
+## Building Ollama
+
+After downloading the repo and applying the patches, its time to build!
+
+Run:
+
+{{< highlight bash >}}
+make -f Makefile.sync clean sync
+
+# CPU libraries
+cmake --preset CPU
+cmake --build --parallel --preset CPU
+cmake --install build --component CPU --strip
+
+# Vulkan libraries
+cmake --preset Vulkan
+cmake --build --parallel --preset Vulkan
+cmake --install build --component Vulkan --strip
+
+# Binary
+source scripts/env.sh || true
+mkdir -p dist/bin
+go build -trimpath -buildmode=pie -o dist/bin/ollama .
+{{< /highlight >}}
+
+
+Once the build is finished, run the server with:
+
+{{< highlight bash >}}
+OLLAMA_HOST=0.0.0.0:11434 ./dist/bin/ollama serve
+{{< /highlight >}}
+
+If you get the error "Please enable CAP_PERFMON or run as root to use Vulkan.", you have to run the binary as root.
+
+## Automated Script
+
+If you don’t want to run all the steps manually, you can use this script:
+
+{{< highlight bash >}}
+#!/bin/bash
+
+export CGO_ENABLED=1
+export LDFLAGS=-s
+
+# Pre-requisites
+wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
+sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-noble.list http://packages.lunarg.com/vulkan/lunarg-vulkan-noble.list
+sudo apt update
+sudo apt install -y git vulkan-sdk cmake wget libcap-dev golang-go 
+
+mkdir -p /tmp/patches
+wget -O /tmp/patches/0002-fix-fix-vulkan-building.patch https://github.com/user-attachments/files/18783263/0002-fix-fix-vulkan-building.patch
+
+# Downloading repos and applying patches
+echo "Cloning and setting up ollama-vulkan repository..."
+REPO_DIR="/tmp/ollama-vulkan-git"
+rm -rf "${REPO_DIR}" 2>/dev/null || true
+git clone -b vulkan https://github.com/whyvl/ollama-vulkan.git "${REPO_DIR}"
+cd "${REPO_DIR}"
+
+git remote add ollama_vanilla https://github.com/ollama/ollama.git
+git fetch ollama_vanilla --tags
+git checkout tags/v0.5.11 -b ollama_vanilla_stable
+git checkout vulkan
+git merge ollama_vanilla_stable --allow-unrelated-histories --no-edit
+patch -p1 -N < /tmp/patches/0002-fix-fix-vulkan-building.patch
+make -f Makefile.sync clean sync
+
+# Building
+echo "Building CPU variant..."
+cmake --preset CPU
+cmake --build --parallel --preset CPU
+cmake --install build --component CPU --strip
+
+echo "Building Vulkan variant..."
+cmake --preset Vulkan
+cmake --build --parallel --preset Vulkan
+cmake --install build --component Vulkan --strip
+
+echo "Building final ollama binary..."
+cd "${REPO_DIR}"
+source scripts/env.sh || true
+mkdir -p dist/bin
+go build -trimpath -buildmode=pie -o dist/bin/ollama .
+
+# Done!
+echo "Build completed."
+echo "CPU libraries are in:      ${REPO_DIR}/dist/lib/ollama"
+echo "Vulkan libraries are in:   ${REPO_DIR}/dist/lib/ollama/vulkan"
+echo "ollama binary is in:       ${REPO_DIR}/dist/bin/ollama"
+{{< /highlight >}}
+
+## Done!
+
+You should now be able to load models using vulkan, leveraging your Intel GPU. 
+
+## Resources
+
+Special thanks to, [@McBane87](https://github.com/McBane87) for a DockerFile that helped me build the project locally. asdasdnalskndlasnkldnlasknldad
+
+<a href="https://github.com/whyvl/ollama-vulkan/issues/7#issuecomment-2660836871" style="display: inline;white-space: normal;word-wrap: break-word;overflow-wrap: break-word;" target="_blank">github.com/whyvl/ollama-vulkan/issues/7#issuecomment-2660836871"</a>
+<a href="https://github.com/ollama/ollama" target="_blank">https://github.com/ollama/ollama</a>
+<a href="https://github.com/ollama/ollama/pull/5059#issuecomment-2629465081" target="_blank">ollama/pull/5059#issuecomment-2629465081</a>
+<a href="https://github.com/whyvl/ollama-vulkan" target="_blank">https://github.com/whyvl/ollama-vulkan</a>
+<a href="https://github.com/whyvl/ollama-vulkan/issues/7" target="_blank">https://github.com/whyvl/ollama-vulkan/issues/7</a>
+
