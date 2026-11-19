@@ -1,0 +1,11 @@
+# Cloudflare Pages redirects (copied to the site root by Hugo)
+# retired posts: the steps no longer work
+/blogs/pfsense_wan_update/  /tags/pfsense/  301
+/blogs/pfsense_wan_update   /tags/pfsense/  301
+/blogs/whitelist/           /tags/pfsense/  301
+/blogs/whitelist            /tags/pfsense/  301
+/tags/suricata/*            /tags/pfsense/  301
+/tags/suricata              /tags/pfsense/  301
+# the categories taxonomy was removed
+/categories/*               /tags/          301
+/categories                 /tags/          301
